@@ -32,7 +32,7 @@ then used to generate the digitized I/Q samples for the GPS signal.
 For example;
 
 ```
-> gps-sdr-sim brdc3540.14n circle.vsv gpssim.bin
+> gps-sdr-sim brdc3540.14n circle.csv gpssim.bin
 ```
 
 ### Transmitting the samples with bladeRF
