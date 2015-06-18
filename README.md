@@ -15,6 +15,12 @@ to RF using software-defined radio (SDR) platforms, such as
 7. Enable the OpenMP Support (/openmp).
 8. Build the solution.
 
+### Building with GCC
+
+```
+$ gcc gpssim.c -lm -fopenmp -o gps-sdr-sim
+```
+
 ### Generating the GPS signal file
 
 A user-defined trajectory can be defined in a CSV file, which contains 
