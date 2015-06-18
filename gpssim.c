@@ -616,6 +616,22 @@ unsigned long computeChecksum(unsigned long source, int nib)
 	return(D);
 }
 
+int checkExpDesignator(char *str, int len)
+{
+	int i,n=0;
+
+	for (i=0; i<len; i++)
+	{
+		if (str[i]=='D')
+		{
+			n++;
+			str[i] = 'E';
+		}
+	}
+	
+	return(n);
+}
+
 int readRinexNav(ephem_t eph[], char *fname)
 {
 	FILE *fp;
@@ -696,14 +712,17 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19); // tmp[15]='E';
 				eph[sv].af0 = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].af1 = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].af2 = atof(tmp);
 
 				// BROADCAST ORBIT - 1
@@ -712,18 +731,22 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].iode = (int)atof(tmp);
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].crs = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].deltan = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].m0 = atof(tmp);
 
 				// BROADCAST ORBIT - 2
@@ -732,18 +755,22 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].cuc = atof(tmp);
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].ecc = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].cus = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].sqrta = atof(tmp);
 
 				// BROADCAST ORBIT - 3
@@ -752,18 +779,22 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].toe.sec = atof(tmp);
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].cic = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].omg0 = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].cis = atof(tmp);
 
 				// BROADCAST ORBIT - 4
@@ -772,18 +803,22 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].inc0 = atof(tmp);
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].crc = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].aop = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].omgdot = atof(tmp);
 
 				// BROADCAST ORBIT - 5
@@ -792,10 +827,12 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].idot = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].toe.week = (int)atof(tmp);
 
 				// BROADCAST ORBIT - 6
@@ -804,10 +841,12 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].tgd = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
+				checkExpDesignator(tmp, 19);
 				eph[sv].iodc = (int)atof(tmp);
 
 				// BROADCAST ORBIT - 7
@@ -1205,7 +1244,8 @@ int main(int argc, char *argv[])
 
 	printf("Generating baseband signals...\n");
 
-	printf("Time = %4.1f\r", grx0.sec-g0.sec);
+	printf("\rTime = %4.1f", grx0.sec-g0.sec);
+	fflush(stdout);
 
 	// Generate I/Q samples for every user motion data
 	for (iumd=0; iumd<(numd-1); iumd++)
@@ -1301,7 +1341,8 @@ int main(int argc, char *argv[])
 		grx0.sec += 0.1;
 
 		// Update time counter
-		printf("Time = %4.1f\r", grx0.sec-g0.sec);
+		printf("\rTime = %4.1f", grx0.sec-g0.sec);
+		fflush(stdout);
 	}
 
 	tend = clock();
@@ -1317,7 +1358,7 @@ int main(int argc, char *argv[])
 	fclose(fp);
 
 	// Process time
-	printf("Process time = %.3f[sec]\n", (double)(tend-tstart)/1000.0);
+	printf("Process time = %.3f[sec]\n", (double)(tend-tstart)/CLOCKS_PER_SEC);
 
 	return(0);
 }
