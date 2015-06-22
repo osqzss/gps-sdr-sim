@@ -32,7 +32,7 @@ indiviual site navigation files into one. The archive for the daily file is:
 
 [ftp://cddis.gsfc.nasa.gov/gnss/data/daily/](ftp://cddis.gsfc.nasa.gov/gnss/data/daily/)
 
-These files are then used to generate the simulated pseudorante and
+These files are then used to generate the simulated pseudorange and
 Doppler for the GPS satellites in view. This simulated range data is 
 then used to generate the digitized I/Q samples for the GPS signal.
 For example;
