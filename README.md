@@ -45,7 +45,7 @@ Options:
   -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)
   -u <user_motion> User motion file (required)
   -o <output>      I/Q sampling data file (default: gpssim.bin)
-  -f <frequency>   Sampling frequency [Hz] (default: 2.6MHz)
+  -s <frequency>   Sampling frequency [Hz] (default: 2600000)
   -b <iq_bits>     I/Q data format [8/16] (default: 8)
 ```
 
