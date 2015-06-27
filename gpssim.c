@@ -17,7 +17,7 @@
 #define MAX_SAT (32)
 #define MAX_CHAN (16)
 
-#define USER_MOTION_SIZE (1000) // max 300 sec at 10Hz
+#define USER_MOTION_SIZE (3000) // max 300 sec at 10Hz
 
 #define N_SBF (51) // 6 seconds per subframe, 6 sec * 51 = 306 sec (max)
 #define N_DWRD (N_SBF*10) // 10 word per subframe
@@ -1106,7 +1106,7 @@ void usage(void)
 		"  -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)\n"
 		"  -u <user_motion> User motion file (required)\n"
 		"  -o <output>      I/Q sampling data file (default: gpssim.bin)\n"
-		"  -f <frequency>   Sampling frequency [Hz] (default: 2.6MHz)\n"
+		"  -s <frequency>   Sampling frequency [Hz] (default: 2600000)\n"
 		"  -b <iq_bits>     I/Q data format [8/16] (default: 8)\n");
 
 	return;
@@ -1184,7 +1184,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:o:f:b:"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:o:s:b:"))!=-1)
 	{
 		switch (result)
 		{
@@ -1197,7 +1197,7 @@ int main(int argc, char *argv[])
 		case 'o':
 			strcpy(outfile, optarg);
 			break;
-		case 'f':
+		case 's':
 			samp_freq = atof(optarg);
 			if (samp_freq<1.0e6)
 			{
