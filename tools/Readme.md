@@ -9,7 +9,7 @@ from LabSat:
 ### Usage
 
 ```
-> nmea2um <nmea_gga> <user_motion>
+nmea2um <nmea_gga> <user_motion>
 ```
 
 ### Instructions
