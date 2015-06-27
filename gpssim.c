@@ -6,11 +6,18 @@
 #include <math.h>
 #include <time.h>
 #include <omp.h>
+#ifdef _WIN32
+#include "getopt.h"
+#else
+#include <unistd.h>
+#endif
 
 #define MAX_CHAR (100)
 
 #define MAX_SAT (32)
 #define MAX_CHAN (16)
+
+#define USER_MOTION_SIZE (1000) // max 300 sec at 10Hz
 
 #define N_SBF (51) // 6 seconds per subframe, 6 sec * 51 = 306 sec (max)
 #define N_DWRD (N_SBF*10) // 10 word per subframe
@@ -42,12 +49,119 @@
 #define CARR_FREQ (1575.42e6)
 #define CODE_FREQ (1.023e6)
 #define CARR_TO_CODE (1.0/1540.0)
-#define SAMP_FREQ (4.0e6)
-#define ADC_GAIN (250.0) // for bladeRF txvga1 = -25dB with 50dB external attenuation
 
-#define USER_MOTION_SIZE (3000) // max 300 sec at 10Hz
-#define IQ_BUFF_SIZE (400000) // 0.4Msps per 0.1sec
- 
+// Sampling data format
+#define SC08 (8)
+#define SC16 (16)
+
+int sinTable512[] = {
+    0,6,12,18,25,31,37,43,50,56,62,
+    68,75,81,87,93,99,106,112,118,124,
+    130,136,142,148,154,160,166,172,178,184,
+    190,195,201,207,213,218,224,230,235,241,
+    246,252,257,263,268,273,279,284,289,294,
+    299,304,310,314,319,324,329,334,339,343,
+    348,353,357,362,366,370,375,379,383,387,
+    391,395,399,403,407,411,414,418,422,425,
+    429,432,435,439,442,445,448,451,454,457,
+    460,462,465,468,470,473,475,477,479,482,
+    484,486,488,489,491,493,495,496,498,499,
+    500,502,503,504,505,506,507,508,508,509,
+    510,510,511,511,511,511,511,512,511,511,
+    511,511,511,510,510,509,508,508,507,506,
+    505,504,503,502,500,499,498,496,495,493,
+    491,489,488,486,484,482,479,477,475,473,
+    470,468,465,462,460,457,454,451,448,445,
+    442,439,435,432,429,425,422,418,414,411,
+    407,403,399,395,391,387,383,379,375,370,
+    366,362,357,353,348,343,339,334,329,324,
+    319,314,310,304,299,294,289,284,279,273,
+    268,263,257,252,246,241,235,230,224,218,
+    213,207,201,195,190,184,178,172,166,160,
+    154,148,142,136,130,124,118,112,106,99,
+    93,87,81,75,68,62,56,50,43,37,
+    31,25,18,12,6,0,-7,-13,-19,-26,
+    -32,-38,-44,-51,-57,-63,-69,-76,-82,-88,
+    -94,-100,-107,-113,-119,-125,-131,-137,-143,-149,
+    -155,-161,-167,-173,-179,-185,-191,-196,-202,-208,
+    -214,-219,-225,-231,-236,-242,-247,-253,-258,-264,
+    -269,-274,-280,-285,-290,-295,-300,-305,-311,-315,
+    -320,-325,-330,-335,-340,-344,-349,-354,-358,-363,
+    -367,-371,-376,-380,-384,-388,-392,-396,-400,-404,
+    -408,-412,-415,-419,-423,-426,-430,-433,-436,-440,
+    -443,-446,-449,-452,-455,-458,-461,-463,-466,-469,
+    -471,-474,-476,-478,-480,-483,-485,-487,-489,-490,
+    -492,-494,-496,-497,-499,-500,-501,-503,-504,-505,
+    -506,-507,-508,-509,-509,-510,-511,-511,-512,-512,
+    -512,-512,-512,-512,-512,-512,-512,-512,-512,-511,
+    -511,-510,-509,-509,-508,-507,-506,-505,-504,-503,
+    -501,-500,-499,-497,-496,-494,-492,-490,-489,-487,
+    -485,-483,-480,-478,-476,-474,-471,-469,-466,-463,
+    -461,-458,-455,-452,-449,-446,-443,-440,-436,-433,
+    -430,-426,-423,-419,-415,-412,-408,-404,-400,-396,
+    -392,-388,-384,-380,-376,-371,-367,-363,-358,-354,
+    -349,-344,-340,-335,-330,-325,-320,-315,-311,-305,
+    -300,-295,-290,-285,-280,-274,-269,-264,-258,-253,
+    -247,-242,-236,-231,-225,-219,-214,-208,-202,-196,
+    -191,-185,-179,-173,-167,-161,-155,-149,-143,-137,
+    -131,-125,-119,-113,-107,-100,-94,-88,-82,-76,
+    -69,-63,-57,-51,-44,-38,-32,-26,-19,-13,-7
+};
+
+int cosTable512[] = {
+    512,511,511,511,511,511,510,510,509,508,508,
+    507,506,505,504,503,502,500,499,498,496,
+    495,493,491,489,488,486,484,482,479,477,
+    475,473,470,468,465,462,460,457,454,451,
+    448,445,442,439,435,432,429,425,422,418,
+    414,411,407,403,399,395,391,387,383,379,
+    375,370,366,362,357,353,348,343,339,334,
+    329,324,319,314,310,304,299,294,289,284,
+    279,273,268,263,257,252,246,241,235,230,
+    224,218,213,207,201,195,190,184,178,172,
+    166,160,154,148,142,136,130,124,118,112,
+    106,99,93,87,81,75,68,62,56,50,
+    43,37,31,25,18,12,6,0,-7,-13,
+    -19,-26,-32,-38,-44,-51,-57,-63,-69,-76,
+    -82,-88,-94,-100,-107,-113,-119,-125,-131,-137,
+    -143,-149,-155,-161,-167,-173,-179,-185,-191,-196,
+    -202,-208,-214,-219,-225,-231,-236,-242,-247,-253,
+    -258,-264,-269,-274,-280,-285,-290,-295,-300,-305,
+    -311,-315,-320,-325,-330,-335,-340,-344,-349,-354,
+    -358,-363,-367,-371,-376,-380,-384,-388,-392,-396,
+    -400,-404,-408,-412,-415,-419,-423,-426,-430,-433,
+    -436,-440,-443,-446,-449,-452,-455,-458,-461,-463,
+    -466,-469,-471,-474,-476,-478,-480,-483,-485,-487,
+    -489,-490,-492,-494,-496,-497,-499,-500,-501,-503,
+    -504,-505,-506,-507,-508,-509,-509,-510,-511,-511,
+    -512,-512,-512,-512,-512,-512,-512,-512,-512,-512,
+    -512,-511,-511,-510,-509,-509,-508,-507,-506,-505,
+    -504,-503,-501,-500,-499,-497,-496,-494,-492,-490,
+    -489,-487,-485,-483,-480,-478,-476,-474,-471,-469,
+    -466,-463,-461,-458,-455,-452,-449,-446,-443,-440,
+    -436,-433,-430,-426,-423,-419,-415,-412,-408,-404,
+    -400,-396,-392,-388,-384,-380,-376,-371,-367,-363,
+    -358,-354,-349,-344,-340,-335,-330,-325,-320,-315,
+    -311,-305,-300,-295,-290,-285,-280,-274,-269,-264,
+    -258,-253,-247,-242,-236,-231,-225,-219,-214,-208,
+    -202,-196,-191,-185,-179,-173,-167,-161,-155,-149,
+    -143,-137,-131,-125,-119,-113,-107,-100,-94,-88,
+    -82,-76,-69,-63,-57,-51,-44,-38,-32,-26,
+    -19,-13,-7,-1,6,12,18,25,31,37,
+    43,50,56,62,68,75,81,87,93,99,
+    106,112,118,124,130,136,142,148,154,160,
+    166,172,178,184,190,195,201,207,213,218,
+    224,230,235,241,246,252,257,263,268,273,
+    279,284,289,294,299,304,310,314,319,324,
+    329,334,339,343,348,353,357,362,366,370,
+    375,379,383,387,391,395,399,403,407,411,
+    414,418,422,425,429,432,435,439,442,445,
+    448,451,454,457,460,462,465,468,470,473,
+    475,477,479,482,484,486,488,489,491,493,
+    495,496,498,499,500,502,503,504,505,506,
+    507,508,508,509,510,510,511,511,511,511,511
+};
+
 typedef struct
 {
 	int week;
@@ -330,7 +444,7 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	double xpk,ypk;
 	double xpkdot,ypkdot;
 
-    double relativistic, OneMinusecosE, sqrtOneMinuse2, tmp;
+	double relativistic, OneMinusecosE, sqrtOneMinuse2, tmp;
 
 	tk = g.sec - eph.toe.sec;
 
@@ -342,10 +456,10 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	a = eph.sqrta*eph.sqrta;
 
 	mkdot = sqrt(GM_EARTH/(a*a*a)) + eph.deltan;
-    mk = eph.m0 + mkdot*tk;
+	mk = eph.m0 + mkdot*tk;
 
 	ek = mk;
-    ekold = ek + 1.0;
+	ekold = ek + 1.0;
   
 	while(fabs(ek-ekold)>1.0E-14)
 	{
@@ -985,6 +1099,19 @@ int readUserMotion(double xyz[USER_MOTION_SIZE][3], char *filename)
 	return (numd);
 }
 
+void usage(void)
+{
+	printf("Usage: gps-sdr-sim [options]\n"
+		"Options:\n"
+		"  -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)\n"
+		"  -u <user_motion> User motion file (required)\n"
+		"  -o <output>      I/Q sampling data file (default: gpssim.bin)\n"
+		"  -f <furequency>  Sampling frequency [Hz] (default: 2.6MHz)\n"
+		"  -b <iq_bits>     I/Q data format [8/16] (default: 8)\n");
+
+	return;
+}
+
 int main(int argc, char *argv[])
 {
 	clock_t tstart,tend;
@@ -1015,13 +1142,13 @@ int main(int argc, char *argv[])
 	unsigned long prevwrd;
 	int nib;
 
-	double ip,qp;
-	short *iq_buff = NULL;
+	int ip,qp;
+	void *iq_buff = NULL;
 
 	gpstime_t grx0,grx1;
 	range_t rho0,rho1;
 
-	double delt = 1.0/SAMP_FREQ;
+	double delt; // = 1.0/SAMP_FREQ;
 	int isamp;
 
 	int iumd;
@@ -1032,23 +1159,87 @@ int main(int argc, char *argv[])
 	char navfile[MAX_CHAR];
 	char outfile[MAX_CHAR];
 
+	double samp_freq;
+	int iq_buff_size;
+	int data_format;
+
+	int result;
+
+	int iTable;
+
 	////////////////////////////////////////////////////////////
-	// Read arguments
+	// Read options
 	////////////////////////////////////////////////////////////
 
-	if (argc!=3 && argc!=4)
+	// Default options
+	navfile[0] = 0;
+	umfile[0] = 0;
+	strcpy(outfile, "gpssim.bin");
+	samp_freq = 2.6e6;
+	data_format = SC08;
+
+	if (argc<3)
 	{
-		printf("Usage: gps-sdr-sim <gps_nav> <user_motion> [output (default: gpssim.bin)]\n");
+		usage();
 		exit(1);
 	}
 
-	strcpy(navfile, argv[1]);
-	strcpy(umfile, argv[2]);
+	while ((result=getopt(argc,argv,"e:u:o:f:b:"))!=-1)
+	{
+		switch (result)
+		{
+		case 'e':
+			strcpy(navfile, optarg);
+			break;
+		case 'u':
+			strcpy(umfile, optarg);
+			break;
+		case 'o':
+			strcpy(outfile, optarg);
+			break;
+		case 'f':
+			samp_freq = atof(optarg);
+			if (samp_freq<1.0e6)
+			{
+				printf("Invalid sampling frequency.\n");
+				exit(1);
+			}
+			break;
+		case 'b':
+			data_format = atoi(optarg);
+			if (data_format!=SC08 && data_format!=SC16)
+			{
+				printf("Invalid data format.\n");
+				exit(1);
+			}
+			break;
+		case ':':
+		case '?':
+			usage();
+			exit(1);
+		default:
+			break;
+		}
+	}
 
-	if (argc==3)
-		strcpy(outfile, "gpssim.bin");
-	else
-		strcpy(outfile, argv[3]);
+	if (navfile[0]==0)
+	{
+		printf("GPS ephemeris file is not specified.\n");
+		exit(1);
+	}
+
+	if (umfile[0]==0)
+	{
+		printf("User motion file is not specified.\n");
+		exit(1);
+	}
+
+	// Buffer size	
+	samp_freq = floor(samp_freq/10.0);
+	iq_buff_size = (int)samp_freq; // samples per 0.1sec
+	samp_freq *= 10.0;
+
+	delt = 1.0/samp_freq;
 
 	////////////////////////////////////////////////////////////
 	// Receiver position
@@ -1142,21 +1333,20 @@ int main(int argc, char *argv[])
 
 				printf("%02d %6.1f %5.1f\n", sv+1, azel[0]*R2D, azel[1]*R2D);
 			}
-
-			//printf("%1c%02d %6.1f %5.1f\n", (azel[1]>elvmask)?'*':' ', sv+1, azel[0]*R2D, azel[1]*R2D);
 		}
 	}
 
 	printf("Number of channels = %d\n", nsat);
-
-	//return(0);
 
 	////////////////////////////////////////////////////////////
 	// Baseband signal buffer and output file
 	////////////////////////////////////////////////////////////
 
 	// Allocate I/Q buffer
-	iq_buff = (short *)calloc(2*IQ_BUFF_SIZE, 2);
+	if (data_format==SC08)
+		iq_buff = (signed char *)calloc(2*iq_buff_size, 1);
+	else
+		iq_buff = (short *)calloc(2*iq_buff_size, 2);
 
 	if (iq_buff==NULL)
 	{
@@ -1184,10 +1374,10 @@ int main(int argc, char *argv[])
 		codegen(chan[i].ca, chan[i].prn);
 
 		// Initialize carrier phase
-		chan[i].carr_phase = 0.0;
+		chan[i].carr_phase = 0.0; // !!FIXME!! Need proper initialization for RTK
 
 		// Allocate I/Q buffer
-		chan[i].iq_buff = (short *)calloc(2*IQ_BUFF_SIZE, 2);
+		chan[i].iq_buff = (short *)calloc(2*iq_buff_size, 2);
 
 		if (chan[i].iq_buff==NULL)
 		{
@@ -1280,14 +1470,16 @@ int main(int argc, char *argv[])
 		// Properties -> Configuration Properties -> C/C++ -> Language -> Open MP Support -> Yes (/openmp)
 		for (i=0; i<nsat; i++)
 		{
-			for (isamp=0; isamp<IQ_BUFF_SIZE; isamp++)
+			for (isamp=0; isamp<iq_buff_size; isamp++)
 			{
-				ip = chan[i].dataBit * chan[i].codeCA * cos(2.0*PI*chan[i].carr_phase);
-				qp = chan[i].dataBit * chan[i].codeCA * sin(2.0*PI*chan[i].carr_phase);
+				iTable = (int)floor(chan[i].carr_phase*512.0);
+
+				ip = chan[i].dataBit * chan[i].codeCA * cosTable512[iTable];
+				qp = chan[i].dataBit * chan[i].codeCA * sinTable512[iTable];
 
 				// Sotre I/Q samples into buffer
-				chan[i].iq_buff[isamp*2]   = (short)(ADC_GAIN*ip);
-				chan[i].iq_buff[isamp*2+1] = (short)(ADC_GAIN*qp);
+				chan[i].iq_buff[isamp*2]   = (short)(ip>>2);
+				chan[i].iq_buff[isamp*2+1] = (short)(qp>>2);
 
 				// Update code phase
 				chan[i].code_phase += chan[i].f_code * delt;
@@ -1327,15 +1519,26 @@ int main(int argc, char *argv[])
 			}
 		} // End of omp parallel for
 	
-		for (isamp=0; isamp<2*IQ_BUFF_SIZE; isamp++)
+		for (isamp=0; isamp<2*iq_buff_size; isamp++)
 		{
-			iq_buff[isamp] = 0;
+			if (data_format==SC08)
+				((signed char*)iq_buff)[isamp] = 0;
+			else
+				((short*)iq_buff)[isamp] = 0;
 
 			for (i=0; i<nsat; i++)
-				iq_buff[isamp] += chan[i].iq_buff[isamp];
+			{
+				if (data_format==SC08)
+					((signed char*)iq_buff)[isamp] += (signed char)(chan[i].iq_buff[isamp]>>4); // 12-bit bladeRF -> 8-bit HackRF
+				else
+					((short*)iq_buff)[isamp] += chan[i].iq_buff[isamp];
+			}
 		}
 
-		fwrite(iq_buff, 2, 2*IQ_BUFF_SIZE, fp); // 2 (I/Q) * 2 (short) * 4 Msps = 16,000,000 byte/s
+		if (data_format==SC08)
+			fwrite(iq_buff, 1, 2*iq_buff_size, fp);
+		else
+			fwrite(iq_buff, 2, 2*iq_buff_size, fp);
 
 		// Next second
 		grx0.sec += 0.1;
