@@ -1106,7 +1106,7 @@ void usage(void)
 		"  -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)\n"
 		"  -u <user_motion> User motion file (required)\n"
 		"  -o <output>      I/Q sampling data file (default: gpssim.bin)\n"
-		"  -f <furequency>  Sampling frequency [Hz] (default: 2.6MHz)\n"
+		"  -f <frequency>   Sampling frequency [Hz] (default: 2.6MHz)\n"
 		"  -b <iq_bits>     I/Q data format [8/16] (default: 8)\n");
 
 	return;
