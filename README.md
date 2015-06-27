@@ -2,13 +2,13 @@
 
 GPS-SDR-SIM generates GPS baseband signal data streams, which can be converted 
 to RF using software-defined radio (SDR) platforms, such as 
-[bladeRF](http://nuand.com/), HackRF, and USRP.
+[bladeRF](http://nuand.com/), [HackRF](https://github.com/mossmann/hackrf/wiki), and USRP.
 
 ### Windows build instructions
 
 1. Start Visual Studio.
 2. Create an empty project for a console application.
-3. On the Solution Explorer at right, add "gpssim.c" to the Souce Files folder.
+3. On the Solution Explorer at right, add "gpssim.c" and "getopt.c" to the Souce Files folder.
 4. Select "Release" in Solution Configurations drop-down list.
 5. Open the Property Pages dialog box and expand the Configuration Properties.
 6. Expand the C/C++ node and select the Language property page.
@@ -35,29 +35,49 @@ indiviual site navigation files into one. The archive for the daily file is:
 These files are then used to generate the simulated pseudorange and
 Doppler for the GPS satellites in view. This simulated range data is 
 then used to generate the digitized I/Q samples for the GPS signal.
-For example;
+
+The bladeRF command line interface requires I/Q pairs stored as signed 
+16-bit integers, while the hackrf_transfere supports signed bytes.
 
 ```
-> gps-sdr-sim brdc3540.14n circle.csv gpssim.bin
+Usage: gps-sdr-sim [options]
+Options:
+  -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)
+  -u <user_motion> User motion file (required)
+  -o <output>      I/Q sampling data file (default: gpssim.bin)
+  -f <furequency>  Sampling frequency [Hz] (default: 2.6MHz)
+  -b <iq_bits>     I/Q data format [8/16] (default: 8)
 ```
 
-### Transmitting the samples with bladeRF
+For example:
 
-The TX port of the bladeRF is connected to the GPS receiver under
-test through a DC block and a fixed 50dB attenuator.
+```
+> gps-sdr-sim -e brdc3540.14n -u circle.csv -b 16
+```
+
+### Transmitting the samples
+
+The TX port of a particular SDR platform is connected to the GPS receiver 
+under test through a DC block and a fixed 50-60dB attenuator.
 
 The simulated GPS signal file, named "gpssim.bin", can be loaded
-into bladeRF for playback as shown below:
+into the bladeRF for playback as shown below:
 
 ```
 set frequency 1575.42M
-set samplerate 4M
+set samplerate 2.6M
 set bandwidth 2.5M
 set txvga1 -25
 cal lms
 cal dc tx
 tx config file=gpssim.bin format=bin
 tx start
+```
+
+For the HackRF:
+
+```
+> hackrf_transfer -t gpssim.bin -f 1575420000 -s 2600000 -a 1 -x 0
 ```
 
 ### License
