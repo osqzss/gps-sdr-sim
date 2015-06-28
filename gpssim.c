@@ -54,6 +54,10 @@
 #define SC08 (8)
 #define SC16 (16)
 
+#define ADC_GAIN (250) // for bladeRF txvga1 = -25dB with 50dB external attenuation
+
+//#define _SINE_LUT
+#ifdef _SINE_LUT
 int sinTable512[] = {
     0,6,12,18,25,31,37,43,50,56,62,
     68,75,81,87,93,99,106,112,118,124,
@@ -161,6 +165,7 @@ int cosTable512[] = {
     495,496,498,499,500,502,503,504,505,506,
     507,508,508,509,510,510,511,511,511,511,511
 };
+#endif
 
 typedef struct
 {
@@ -1142,7 +1147,12 @@ int main(int argc, char *argv[])
 	unsigned long prevwrd;
 	int nib;
 
+#ifdef _SINE_LUT
 	int ip,qp;
+	int iTable;
+#else
+	double ip,qp;
+#endif
 	void *iq_buff = NULL;
 
 	gpstime_t grx0,grx1;
@@ -1164,8 +1174,6 @@ int main(int argc, char *argv[])
 	int data_format;
 
 	int result;
-
-	int iTable;
 
 	////////////////////////////////////////////////////////////
 	// Read options
@@ -1472,15 +1480,23 @@ int main(int argc, char *argv[])
 		{
 			for (isamp=0; isamp<iq_buff_size; isamp++)
 			{
+#ifdef _SINE_LUT
 				iTable = (int)floor(chan[i].carr_phase*512.0);
 
 				ip = chan[i].dataBit * chan[i].codeCA * cosTable512[iTable];
 				qp = chan[i].dataBit * chan[i].codeCA * sinTable512[iTable];
 
 				// Sotre I/Q samples into buffer
-				chan[i].iq_buff[isamp*2]   = (short)(ip>>2);
-				chan[i].iq_buff[isamp*2+1] = (short)(qp>>2);
+				chan[i].iq_buff[isamp*2]   = (short)(ip>>1);
+				chan[i].iq_buff[isamp*2+1] = (short)(qp>>1);
+#else
+				ip = chan[i].dataBit * chan[i].codeCA * cos(2.0*PI*chan[i].carr_phase);
+				qp = chan[i].dataBit * chan[i].codeCA * sin(2.0*PI*chan[i].carr_phase);
 
+				// Sotre I/Q samples into buffer
+				chan[i].iq_buff[isamp*2]   = (short)(ADC_GAIN*ip);
+				chan[i].iq_buff[isamp*2+1] = (short)(ADC_GAIN*qp);
+#endif
 				// Update code phase
 				chan[i].code_phase += chan[i].f_code * delt;
 
