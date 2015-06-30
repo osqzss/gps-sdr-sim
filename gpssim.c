@@ -254,22 +254,22 @@ void codegen(int *ca, int prn)
 
 	for (i=0; i<1023; i++) 
 	{
-        g1[i] = r1[9];
-        g2[i] = r2[9];
-        c1 = r1[2]*r1[9];
-        c2 = r2[1]*r2[2]*r2[5]*r2[7]*r2[8]*r2[9];
+		g1[i] = r1[9];
+		g2[i] = r2[9];
+		c1 = r1[2]*r1[9];
+		c2 = r2[1]*r2[2]*r2[5]*r2[7]*r2[8]*r2[9];
 
-        for (j=9; j>0; j--) 
+		for (j=9; j>0; j--) 
 		{
-            r1[j] = r1[j-1];
-            r2[j] = r2[j-1];
-        }
-        r1[0] = c1;
-        r2[0] = c2;
-    }
+			r1[j] = r1[j-1];
+			r2[j] = r2[j-1];
+		}
+		r1[0] = c1;
+		r2[0] = c2;
+	}
 
 	for (i=0,j=1023-delay[prn-1]; i<1023; i++,j++)
-        ca[i] = (1-g1[i]*g2[j%1023])/2;
+		ca[i] = (1-g1[i]*g2[j%1023])/2;
 	
 	return;
 }
@@ -284,7 +284,7 @@ void date2gps(datetime_t *t, gpstime_t *g)
 	ye = t->y - 1980;
 
 	// Compute the number of leap days since Jan 5/Jan 6, 1980.
-    lpdays = ye/4 + 1;
+	lpdays = ye/4 + 1;
 	if ((ye%4)==0 && t->m<=2)
 		lpdays--;
 
