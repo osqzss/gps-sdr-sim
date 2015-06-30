@@ -5,7 +5,7 @@ all: gps-sdr-sim gps-sdr-sim-lut
 
 SHELL=/bin/bash
 CC=gcc
-CFLAGS=-fopenmp
+CFLAGS=-fopenmp -O3
 LDFLAGS=-lm -fopenmp
 
 gps-sdr-sim: gpssim.o

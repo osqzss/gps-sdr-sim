@@ -32,3 +32,9 @@ gps-sdr-sim-lut
 
 # Debug files
 *.dSYM/
+
+# Output
+gpssim.bin
+
+# Temporary files
+*.swp
