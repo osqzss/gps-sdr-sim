@@ -27,6 +27,8 @@
 *.i*86
 *.x86_64
 *.hex
+gps-sdr-sim
+gps-sdr-sim-lut
 
 # Debug files
 *.dSYM/

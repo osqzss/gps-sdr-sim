@@ -17,5 +17,5 @@ nmea2um <nmea_gga> <user_motion>
 1. Sketch out a route in Google Earth.
 2. Save the path as a KML file.
 3. Load the KML file in SatGen.
-4. Set the output rate at 10Hz and generate a NMEA file.
-5. Conver the NMEA data to the user motion CSV format.
+4. Set the output rate at 10Hz and generate an NMEA file.
+5. Convert the NMEA data to the user motion CSV format.
