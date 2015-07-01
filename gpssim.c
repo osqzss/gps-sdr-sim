@@ -1138,7 +1138,7 @@ int main(int argc, char *argv[])
 	int i;
 	int nsat;
 	channel_t chan[MAX_CHAN];
-	double elvmask  = 0.0/R2D;
+	double elvmask = 0.0/R2D;
 
 	int isbf,iwrd;
 	unsigned long tow;
@@ -1155,8 +1155,8 @@ int main(int argc, char *argv[])
 #endif
 	void *iq_buff = NULL;
 
-	gpstime_t grx0,grx1;
-	range_t rho0,rho1;
+	gpstime_t grx;
+	range_t rho_backup[MAX_SAT];
 
 	double delt; // = 1.0/SAMP_FREQ;
 	int isamp;
@@ -1374,7 +1374,7 @@ int main(int argc, char *argv[])
 	////////////////////////////////////////////////////////////
 
 	// Initial reception time
-	grx0 = g0;
+	grx = g0;
 
 	for (i=0; i<nsat; i++)
 	{
@@ -1442,42 +1442,38 @@ int main(int argc, char *argv[])
 
 	printf("Generating baseband signals...\n");
 
-	printf("\rTime = %4.1f", grx0.sec-g0.sec);
+	printf("\rTime = %4.1f", grx.sec-g0.sec);
 	fflush(stdout);
 
+	//
 	// Generate I/Q samples for every user motion data
-	for (iumd=0; iumd<(numd-1); iumd++)
+	//
+
+	// Initial pseudorange
+	for (i=0; i<nsat; i++)
 	{
-		// Refresh code phase and data bit counters
-		for (i=0; i<nsat; i++)
-		{
-			// Current pseudorange
-			sv = chan[i].prn-1;
+		sv = chan[i].prn-1;
+		computeRange(&rho_backup[sv], eph[sv], grx, umd[0]);
+	}
 
-			xyz[0] = umd[iumd][0];
-			xyz[1] = umd[iumd][1];
-			xyz[2] = umd[iumd][2];
-
-			computeRange(&rho0, eph[sv], grx0, xyz);
-
-			// Pseudorange at next time step
-			grx1 = grx0;
-			grx1.sec += 0.1;
-
-			xyz[0] = umd[iumd+1][0];
-			xyz[1] = umd[iumd+1][1];
-			xyz[2] = umd[iumd+1][2];
-
-			computeRange(&rho1, eph[sv], grx1, xyz);
-
-			// Update code phase and data bit counters
-			computeCodePhase(&chan[i], rho0, rho1, 0.1);
-		}
-
+	grx.sec += 0.1;
+	for (iumd=1; iumd<numd; iumd++)
+	{
 		#pragma omp parallel for private(isamp)
 		// Properties -> Configuration Properties -> C/C++ -> Language -> Open MP Support -> Yes (/openmp)
 		for (i=0; i<nsat; i++)
 		{
+			// Refresh code phase and data bit counters
+			int sv = chan[i].prn-1;
+			range_t rho;
+
+			// Current pseudorange
+			computeRange(&rho, eph[sv], grx, umd[iumd]);
+
+			// Update code phase and data bit counters
+			computeCodePhase(&chan[i], rho_backup[sv], rho, 0.1);
+			rho_backup[sv] = rho;
+
 			for (isamp=0; isamp<iq_buff_size; isamp++)
 			{
 #ifdef _SINE_LUT
@@ -1534,33 +1530,33 @@ int main(int argc, char *argv[])
 					chan[i].carr_phase += 1.0;
 			}
 		} // End of omp parallel for
-	
-		for (isamp=0; isamp<2*iq_buff_size; isamp++)
-		{
-			if (data_format==SC08)
-				((signed char*)iq_buff)[isamp] = 0;
-			else
-				((short*)iq_buff)[isamp] = 0;
-
-			for (i=0; i<nsat; i++)
-			{
-				if (data_format==SC08)
-					((signed char*)iq_buff)[isamp] += (signed char)(chan[i].iq_buff[isamp]>>4); // 12-bit bladeRF -> 8-bit HackRF
-				else
-					((short*)iq_buff)[isamp] += chan[i].iq_buff[isamp];
-			}
-		}
 
 		if (data_format==SC08)
+		{
+			for (isamp=0; isamp<2*iq_buff_size; isamp++)
+			{
+				char sample = 0;
+				for (i=0; i<nsat; i++)
+					sample += (signed char)(chan[i].iq_buff[isamp]>>4); // 12-bit bladeRF -> 8-bit HackRF
+				((signed char*)iq_buff)[isamp] = sample;
+			}
 			fwrite(iq_buff, 1, 2*iq_buff_size, fp);
-		else
+		} else {
+			for (isamp=0; isamp<2*iq_buff_size; isamp++)
+			{
+				short sample = 0;
+				for (i=0; i<nsat; i++)
+					sample += chan[i].iq_buff[isamp];
+				((short*)iq_buff)[isamp] = sample;
+			}
 			fwrite(iq_buff, 2, 2*iq_buff_size, fp);
+		}
 
 		// Next second
-		grx0.sec += 0.1;
+		grx.sec += 0.1;
 
 		// Update time counter
-		printf("\rTime = %4.1f", grx0.sec-g0.sec);
+		printf("\rTime = %4.1f", grx.sec-g0.sec);
 		fflush(stdout);
 	}
 
