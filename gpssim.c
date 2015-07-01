@@ -244,7 +244,6 @@ void codegen(int *ca, int prn)
 	
 	int g1[1023],g2[1023],r1[10],r2[10],c1,c2;
 	int i,j;
-	int sv = prn-1;
 
 	if (prn<1 || prn>32)
 		return;
