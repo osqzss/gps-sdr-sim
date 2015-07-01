@@ -1482,14 +1482,14 @@ int main(int argc, char *argv[])
 				ip = chan[i].dataBit * chan[i].codeCA * cosTable512[iTable];
 				qp = chan[i].dataBit * chan[i].codeCA * sinTable512[iTable];
 
-				// Sotre I/Q samples into buffer
+				// Store I/Q samples into buffer
 				chan[i].iq_buff[isamp*2]   = (short)(ip>>1);
 				chan[i].iq_buff[isamp*2+1] = (short)(qp>>1);
 #else
 				ip = chan[i].dataBit * chan[i].codeCA * cos(2.0*PI*chan[i].carr_phase);
 				qp = chan[i].dataBit * chan[i].codeCA * sin(2.0*PI*chan[i].carr_phase);
 
-				// Sotre I/Q samples into buffer
+				// Store I/Q samples into buffer
 				chan[i].iq_buff[isamp*2]   = (short)(ADC_GAIN*ip);
 				chan[i].iq_buff[isamp*2+1] = (short)(ADC_GAIN*qp);
 #endif
