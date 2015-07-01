@@ -1127,7 +1127,7 @@ int main(int argc, char *argv[])
 	ephem_t eph[MAX_SAT];
 	gpstime_t g0;
 	
-	double llh[3],xyz[3];
+	double llh[3];
 	double pos[3],vel[3],clk[2];
 	double tmat[3][3];
 	double los[3];
@@ -1268,15 +1268,10 @@ int main(int argc, char *argv[])
 
 	printf("User motion data = %d\n", numd);
 
-	// Initial location
-	xyz[0] = umd[0][0];
-	xyz[1] = umd[0][1];
-	xyz[2] = umd[0][2];
+	// Initial location in Geodetic coordinate system
+	xyz2llh(umd[0], llh);
 
-	// Geodetic coordinate system
-	xyz2llh(xyz, llh);
-
-	printf("xyz = %11.1f, %11.1f, %11.1f\n", xyz[0], xyz[1], xyz[2]);
+	printf("xyz = %11.1f, %11.1f, %11.1f\n", umd[0][0], umd[0][1], umd[0][2]);
 	printf("llh = %11.6f, %11.6f, %11.1f\n", llh[0]*R2D, llh[1]*R2D, llh[2]);
 
 	////////////////////////////////////////////////////////////
@@ -1325,11 +1320,7 @@ int main(int argc, char *argv[])
 		if (eph[sv].vflg==1)
 		{
 			satpos(eph[sv], g0, pos, vel, clk);
-
-			los[0] = pos[0] - xyz[0];
-			los[1] = pos[1] - xyz[1];
-			los[2] = pos[2] - xyz[2];
-
+			subVect(los, pos, umd[0]);
 			ecef2neu(los, tmat, neu);
 			neu2azel(azel, neu);
 
