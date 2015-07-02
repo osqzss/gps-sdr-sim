@@ -1,7 +1,7 @@
 # Makefile for Linux etc.
 
-.PHONY: all clean test test-lut test-nolut
-all: gps-sdr-sim gps-sdr-sim-lut
+.PHONY: all clean test
+all: gps-sdr-sim
 
 SHELL=/bin/bash
 CC=gcc
@@ -11,24 +11,11 @@ LDFLAGS=-lm -fopenmp
 gps-sdr-sim: gpssim.o
 	${CC} $< ${LDFLAGS} -o $@
 
-gps-sdr-sim-lut: gpssim-lut.o
-	${CC} $< ${LDFLAGS} -o $@
-
-gpssim-lut.o: gpssim.c
-	${CC} -c -D_SINE_LUT ${CFLAGS} $< -o $@
-
 clean:
-	rm -f gpssim.o gpssim-lut.o gps-sdr-sim gps-sdr-sim-lut *.bin
+	rm -f gpssim.o gps-sdr-sim *.bin
 
-test: test-lut
-test-lut: gps-sdr-sim-lut
-	time ./gps-sdr-sim-lut -e brdc3540.14n -u circle.csv -b 8
-	test "$$(md5sum gpssim.bin | awk '{print $$1}')" == "39a577af659440605c4ebbe178f4c4e3"
-	time ./gps-sdr-sim-lut -e brdc3540.14n -u circle.csv -b 16
-	test "$$(md5sum gpssim.bin | awk '{print $$1}')" == "bdd460893ad73b19412fc1757e62ccf9"
-
-test-nolut: gps-sdr-sim
+test: gps-sdr-sim
 	time ./gps-sdr-sim -e brdc3540.14n -u circle.csv -b 8
-	test "$$(md5sum gpssim.bin | awk '{print $$1}')" == "f4beb0857f82038d0465eb9934009edd"
+	test "$$(md5sum gpssim.bin | awk '{print $$1}')" == "1a1aa6de6ee7faf58c1544a62aabc900"
 	time ./gps-sdr-sim -e brdc3540.14n -u circle.csv -b 16
-	test "$$(md5sum gpssim.bin | awk '{print $$1}')" == "10403720cb3483515f470fdea09e02ed"
+	test "$$(md5sum gpssim.bin | awk '{print $$1}')" == "5b33200201e8e90e6f29a5236dd89a2d"
