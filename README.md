@@ -37,13 +37,14 @@ Doppler for the GPS satellites in view. This simulated range data is
 then used to generate the digitized I/Q samples for the GPS signal.
 
 The bladeRF command line interface requires I/Q pairs stored as signed 
-16-bit integers, while the hackrf_transfere supports signed bytes.
+16-bit integers, while the hackrf_transfer supports signed bytes.
 
 ```
 Usage: gps-sdr-sim [options]
 Options:
   -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)
-  -u <user_motion> User motion file (required)
+  -u <user_motion> User motion file
+  -l <location>    Latitude,Longitude,Height (static mode) eg: 30.286502,120.032669,100
   -o <output>      I/Q sampling data file (default: gpssim.bin)
   -s <frequency>   Sampling frequency [Hz] (default: 2600000)
   -b <iq_bits>     I/Q data format [8/16] (default: 8)
@@ -53,6 +54,10 @@ For example:
 
 ```
 > gps-sdr-sim -e brdc3540.14n -u circle.csv -b 16
+```
+
+```
+> gps-sdr-sim -e brdc3540.14n -l 30.286502,120.032669,100 -b 16
 ```
 
 ### Transmitting the samples
