@@ -12,6 +12,12 @@
 #include <unistd.h>
 #endif
 
+#ifndef bool
+typedef int bool;
+#define true 1
+#define false 0
+#endif
+
 #define MAX_CHAR (100)
 
 #define MAX_SAT (32)
@@ -299,7 +305,7 @@ void xyz2llh(double *xyz, double *llh)
 
 	return;
 }
-/*
+
 void llh2xyz(double *llh, double *xyz)
 {
 	double n;
@@ -333,7 +339,7 @@ void llh2xyz(double *llh, double *xyz)
 
 	return;
 }
-*/
+
 void ltcmat(double *llh, double t[3][3])
 {
 	double slat, clat;
@@ -1071,6 +1077,7 @@ void usage(void)
 		"Options:\n"
 		"  -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)\n"
 		"  -u <user_motion> User motion file (required)\n"
+		"  -l <location>    Latitude,Longitude,Height (static mode) eg: 30.286502,120.032669,100\n"
 		"  -o <output>      I/Q sampling data file (default: gpssim.bin)\n"
 		"  -s <frequency>   Sampling frequency [Hz] (default: 2600000)\n"
 		"  -b <iq_bits>     I/Q data format [8/16] (default: 8)\n");
@@ -1125,6 +1132,7 @@ int main(int argc, char *argv[])
 	int iumd;
 	int numd;
 	char umfile[MAX_CHAR];
+	bool staticLocationMode = false;
 	double xyz[USER_MOTION_SIZE][3];
 
 	char navfile[MAX_CHAR];
@@ -1153,7 +1161,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:o:s:b:"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:l:o:s:b:"))!=-1)
 	{
 		switch (result)
 		{
@@ -1162,6 +1170,14 @@ int main(int argc, char *argv[])
 			break;
 		case 'u':
 			strcpy(umfile, optarg);
+			break;
+		case 'l':
+			// static llh coordinate input mode.
+			// add by scateu@gmail.com
+			staticLocationMode = true;
+			sscanf(optarg,"%lf,%lf,%lf",&llh[0],&llh[1],&llh[2]);
+			llh[0] = llh[0] / R2D; // convert to RAD
+			llh[1] = llh[1] / R2D; // convert to RAD
 			break;
 		case 'o':
 			strcpy(outfile, optarg);
@@ -1214,27 +1230,45 @@ int main(int argc, char *argv[])
 	// Receiver position
 	////////////////////////////////////////////////////////////
 
-	// Read user motion file
-	numd = readUserMotion(xyz, umfile);
 
-	if (numd==-1)
+	if (!staticLocationMode)
 	{
-		printf("Failed to open user motion file.\n");
-		exit(1);
+		// Read user motion file
+		numd = readUserMotion(xyz, umfile);
+		if (numd==-1)
+		{
+			printf("Failed to open user motion file.\n");
+			exit(1);
+		}
+		else if (numd==0)
+		{
+			printf("Failed to read user motion data.\n");
+			exit(1);
+		}
+
+		printf("User motion data = %d\n", numd);
+
+		// Initial location in Geodetic coordinate system
+		xyz2llh(xyz[0], llh);
+
+		printf("xyz = %11.1f, %11.1f, %11.1f\n", xyz[0][0], xyz[0][1], xyz[0][2]);
+		printf("llh = %11.6f, %11.6f, %11.1f\n", llh[0]*R2D, llh[1]*R2D, llh[2]);
+
+	} else { 
+		// static llh coordinate input mode.  "-l"
+		// add by scateu@gmail.com 
+		printf("Using static location mode.\n");
+		llh2xyz(llh,xyz[0]); // convert llh to xyz
+		printf("xyz = %11.1f, %11.1f, %11.1f\n", xyz[0][0], xyz[0][1], xyz[0][2]);
+		printf("llh = %11.6f, %11.6f, %11.1f\n", llh[0]*R2D, llh[1]*R2D, llh[2]);
+
+		numd = USER_MOTION_SIZE;
+		for (int i=1;i<numd;i++) {
+			xyz[i][0] = xyz[0][0];
+			xyz[i][1] = xyz[0][1];
+			xyz[i][2] = xyz[0][2];
+		}
 	}
-	else if (numd==0)
-	{
-		printf("Failed to read user motion data.\n");
-		exit(1);
-	}
-
-	printf("User motion data = %d\n", numd);
-
-	// Initial location in Geodetic coordinate system
-	xyz2llh(xyz[0], llh);
-
-	printf("xyz = %11.1f, %11.1f, %11.1f\n", xyz[0][0], xyz[0][1], xyz[0][2]);
-	printf("llh = %11.6f, %11.6f, %11.1f\n", llh[0]*R2D, llh[1]*R2D, llh[2]);
 
 	////////////////////////////////////////////////////////////
 	// Read ephemeris
