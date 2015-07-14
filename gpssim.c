@@ -1076,7 +1076,7 @@ void usage(void)
 	printf("Usage: gps-sdr-sim [options]\n"
 		"Options:\n"
 		"  -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)\n"
-		"  -u <user_motion> User motion file (required)\n"
+		"  -u <user_motion> User motion file \n"
 		"  -l <location>    Latitude,Longitude,Height (static mode) eg: 30.286502,120.032669,100\n"
 		"  -o <output>      I/Q sampling data file (default: gpssim.bin)\n"
 		"  -s <frequency>   Sampling frequency [Hz] (default: 2600000)\n"
@@ -1213,9 +1213,10 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (umfile[0]==0)
+	if (umfile[0]==0 && !staticLocationMode)
 	{
 		printf("User motion file is not specified.\n");
+		printf("Or you may use -l to specify llh coordinate directly.\n");
 		exit(1);
 	}
 
