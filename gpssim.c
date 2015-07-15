@@ -9,7 +9,7 @@
 #ifdef _WIN32
 #include "getopt.h"
 #else
-#include <unistd.h>
+#include <getopt.h>
 #endif
 
 #ifndef bool
