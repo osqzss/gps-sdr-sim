@@ -1260,11 +1260,11 @@ int main(int argc, char *argv[])
 
 		numd = USER_MOTION_SIZE;
 		
-		for (int i=1;i<numd;i++) 
+		for (iumd=1; iumd<numd; iumd++)
 		{
-			xyz[i][0] = xyz[0][0];
-			xyz[i][1] = xyz[0][1];
-			xyz[i][2] = xyz[0][2];
+			xyz[iumd][0] = xyz[0][0];
+			xyz[iumd][1] = xyz[0][1];
+			xyz[iumd][2] = xyz[0][2];
 		}
 	}
 
