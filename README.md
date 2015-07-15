@@ -23,8 +23,9 @@ $ gcc gpssim.c -lm -fopenmp -o gps-sdr-sim
 
 ### Generating the GPS signal file
 
-A user-defined trajectory can be defined in a CSV file, which contains 
+A user-defined trajectory can be specified in a CSV file, which contains 
 the Earth-centered Earth-fixed (ECEF) user positions at 10Hz.
+The user is also able to assign a static location directly through the command line.
 
 The user specifies the GPS satellite constellation through a GPS broadcast 
 ephemeris file. The daily GPS broadcast ephemers file (brdc) is a merge of the
