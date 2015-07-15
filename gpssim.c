@@ -1076,8 +1076,8 @@ void usage(void)
 	printf("Usage: gps-sdr-sim [options]\n"
 		"Options:\n"
 		"  -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)\n"
-		"  -u <user_motion> User motion file \n"
-		"  -l <location>    Latitude,Longitude,Height (static mode) eg: 30.286502,120.032669,100\n"
+		"  -u <user_motion> User motion file (dynamic mode)\n"
+		"  -l <location>    Lat,Lon,Hgt (static mode) e.g. 30.286502,120.032669,100\n"
 		"  -o <output>      I/Q sampling data file (default: gpssim.bin)\n"
 		"  -s <frequency>   Sampling frequency [Hz] (default: 2600000)\n"
 		"  -b <iq_bits>     I/Q data format [8/16] (default: 8)\n");
@@ -1172,8 +1172,8 @@ int main(int argc, char *argv[])
 			strcpy(umfile, optarg);
 			break;
 		case 'l':
-			// static llh coordinate input mode.
-			// add by scateu@gmail.com
+			// Static geodetic coordinates input mode
+			// Added by scateu@gmail.com
 			staticLocationMode = true;
 			sscanf(optarg,"%lf,%lf,%lf",&llh[0],&llh[1],&llh[2]);
 			llh[0] = llh[0] / R2D; // convert to RAD
@@ -1231,7 +1231,6 @@ int main(int argc, char *argv[])
 	// Receiver position
 	////////////////////////////////////////////////////////////
 
-
 	if (!staticLocationMode)
 	{
 		// Read user motion file
@@ -1251,25 +1250,26 @@ int main(int argc, char *argv[])
 
 		// Initial location in Geodetic coordinate system
 		xyz2llh(xyz[0], llh);
-
-		printf("xyz = %11.1f, %11.1f, %11.1f\n", xyz[0][0], xyz[0][1], xyz[0][2]);
-		printf("llh = %11.6f, %11.6f, %11.1f\n", llh[0]*R2D, llh[1]*R2D, llh[2]);
-
-	} else { 
-		// static llh coordinate input mode.  "-l"
-		// add by scateu@gmail.com 
+	} 
+	else 
+	{ 
+		// Static geodetic coordinates input mode: "-l"
+		// Added by scateu@gmail.com 
 		printf("Using static location mode.\n");
-		llh2xyz(llh,xyz[0]); // convert llh to xyz
-		printf("xyz = %11.1f, %11.1f, %11.1f\n", xyz[0][0], xyz[0][1], xyz[0][2]);
-		printf("llh = %11.6f, %11.6f, %11.1f\n", llh[0]*R2D, llh[1]*R2D, llh[2]);
+		llh2xyz(llh,xyz[0]); // Convert llh to xyz
 
 		numd = USER_MOTION_SIZE;
-		for (int i=1;i<numd;i++) {
+		
+		for (int i=1;i<numd;i++) 
+		{
 			xyz[i][0] = xyz[0][0];
 			xyz[i][1] = xyz[0][1];
 			xyz[i][2] = xyz[0][2];
 		}
 	}
+
+	printf("xyz = %11.1f, %11.1f, %11.1f\n", xyz[0][0], xyz[0][1], xyz[0][2]);
+	printf("llh = %11.6f, %11.6f, %11.1f\n", llh[0]*R2D, llh[1]*R2D, llh[2]);
 
 	////////////////////////////////////////////////////////////
 	// Read ephemeris
@@ -1468,7 +1468,7 @@ int main(int argc, char *argv[])
 	
 	for (iumd=1; iumd<numd; iumd++)
 	{
-		#pragma omp parallel for private(isamp)
+		//#pragma omp parallel for private(isamp) // !!!FIXME!!! The current code runs faster without OpenMP support
 		// Properties -> Configuration Properties -> C/C++ -> Language -> Open MP Support -> Yes (/openmp)
 		for (i=0; i<nsat; i++)
 		{

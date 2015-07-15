@@ -43,14 +43,14 @@ The bladeRF command line interface requires I/Q pairs stored as signed
 Usage: gps-sdr-sim [options]
 Options:
   -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)
-  -u <user_motion> User motion file
-  -l <location>    Latitude,Longitude,Height (static mode) eg: 30.286502,120.032669,100
+  -u <user_motion> User motion file (dynamic mode)
+  -l <location>    Lat,Lon,Hgt (static mode) e.g. 30.286502,120.032669,100
   -o <output>      I/Q sampling data file (default: gpssim.bin)
   -s <frequency>   Sampling frequency [Hz] (default: 2600000)
   -b <iq_bits>     I/Q data format [8/16] (default: 8)
 ```
 
-For example:
+The user motion can be specified in either dynamic or static mode:
 
 ```
 > gps-sdr-sim -e brdc3540.14n -u circle.csv -b 16
