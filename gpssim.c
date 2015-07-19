@@ -980,6 +980,7 @@ void computeRange(range_t *rho, ephem_t eph, gpstime_t g, double xyz[])
 	double los[3];
 	double tau;
 	double range,rate;
+	double tmp;
 	
 	// SV position at time of the pseudorange observation.
 	satpos(eph, g, pos, vel, clk);
@@ -994,8 +995,9 @@ void computeRange(range_t *rho, ephem_t eph, gpstime_t g, double xyz[])
 	pos[2] -= vel[2]*tau;
 
 	// Earth rotation correction. The change in velocity can be neglected.
+	tmp = pos[0]*OMEGA_EARTH*tau;
 	pos[0] += pos[1]*OMEGA_EARTH*tau;
-	pos[1] -= pos[0]*OMEGA_EARTH*tau;
+	pos[1] -= tmp;
 
 	// New observer to satellite vector and satellite range.
 	subVect(los, pos, xyz);
