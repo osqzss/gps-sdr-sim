@@ -177,6 +177,12 @@ typedef struct
 	double af1;
 	double af2;
 	double tgd;
+
+	// Working variables follow
+	double n; // Mean motion (Average angular velocity)
+	double sq1e2; // sqrt(1-e^2)
+	double A; // A
+	double omgkdot; // (OmegaDot-OmegaEdot)
 } ephem_t;
 
 typedef struct
@@ -392,9 +398,7 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	// http://www.ngs.noaa.gov/gps-toolbox/bc_velo.htm
 
 	double tk;
-	double a;
 	double mk;
-	double mkdot;
 	double ek;
 	double ekold;
 	double ekdot;
@@ -406,7 +410,6 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	double ukdot;
 	double cuk,suk;
 	double ok;
-	double okdot;
 	double sok,cok;
 	double ik;
 	double ikdot;
@@ -416,7 +419,7 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	double xpk,ypk;
 	double xpkdot,ypkdot;
 
-	double relativistic, OneMinusecosE, sqrtOneMinuse2, tmp;
+	double relativistic, OneMinusecosE, tmp;
 
 	tk = g.sec - eph.toe.sec;
 
@@ -425,11 +428,7 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	else if(tk<-SECONDS_IN_HALF_WEEK)
 		tk += SECONDS_IN_WEEK;
 
-	a = eph.sqrta*eph.sqrta;
-
-	mkdot = sqrt(GM_EARTH/(a*a*a)) + eph.deltan;
-	mk = eph.m0 + mkdot*tk;
-
+	mk = eph.m0 + eph.n*tk;
 	ek = mk;
 	ekold = ek + 1.0;
   
@@ -443,14 +442,12 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	sek = sin(ek);
 	cek = cos(ek);
 
-	ekdot = mkdot/OneMinusecosE;
+	ekdot = eph.n/OneMinusecosE;
 
 	relativistic = -4.442807633E-10*eph.ecc*eph.sqrta*sek;
 
-	sqrtOneMinuse2 = sqrt(1.0 - eph.ecc*eph.ecc);
-
-	pk = atan2(sqrtOneMinuse2*sek,cek-eph.ecc) + eph.aop;
-	pkdot = sqrtOneMinuse2*ekdot/OneMinusecosE;
+	pk = atan2(eph.sq1e2*sek,cek-eph.ecc) + eph.aop;
+	pkdot = eph.sq1e2*ekdot/OneMinusecosE;
 
 	s2pk = sin(2.0*pk);
 	c2pk = cos(2.0*pk);
@@ -460,8 +457,8 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	cuk = cos(uk);
 	ukdot = pkdot*(1.0 + 2.0*(eph.cus*c2pk - eph.cuc*s2pk));
 
-	rk = a*OneMinusecosE + eph.crc*c2pk + eph.crs*s2pk;
-	rkdot = a*eph.ecc*sek*ekdot + 2.0*pkdot*(eph.crs*c2pk - eph.crc*s2pk);
+	rk = eph.A*OneMinusecosE + eph.crc*c2pk + eph.crs*s2pk;
+	rkdot = eph.A*eph.ecc*sek*ekdot + 2.0*pkdot*(eph.crs*c2pk - eph.crc*s2pk);
 
 	ik = eph.inc0 + eph.idot*tk + eph.cic*c2pk + eph.cis*s2pk;
 	sik = sin(ik);
@@ -473,8 +470,7 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	xpkdot = rkdot*cuk - ypk*ukdot;
 	ypkdot = rkdot*suk + xpk*ukdot;
 
-	okdot = eph.omgdot - OMEGA_EARTH;
-	ok = eph.omg0 + tk*okdot - OMEGA_EARTH*eph.toe.sec;
+	ok = eph.omg0 + tk*eph.omgkdot - OMEGA_EARTH*eph.toe.sec;
 	sok = sin(ok);
 	cok = cos(ok);
 
@@ -484,8 +480,8 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 
 	tmp = ypkdot*cik - ypk*sik*ikdot;
 
-	vel[0] = -okdot*pos[1] + xpkdot*cok - tmp*sok;
-	vel[1] = okdot*pos[0] + xpkdot*sok + tmp*cok;
+	vel[0] = -eph.omgkdot*pos[1] + xpkdot*cok - tmp*sok;
+	vel[1] = eph.omgkdot*pos[0] + xpkdot*sok + tmp*cok;
 	vel[2] = ypk*cik*ikdot + ypkdot*sik;
 
 	clk[0] = eph.af0 + tk*(eph.af1 + tk*eph.af2) + relativistic - eph.tgd;  
@@ -946,6 +942,12 @@ int readRinexNav(ephem_t eph[], char *fname)
 		}
 		else
 			break;
+
+		// Update the working variables
+		eph[sv].A = eph[sv].sqrta * eph[sv].sqrta;
+		eph[sv].n = sqrt(GM_EARTH/(eph[sv].A*eph[sv].A*eph[sv].A)) + eph[sv].deltan;
+		eph[sv].sq1e2 = sqrt(1.0 - eph[sv].ecc*eph[sv].ecc);
+		eph[sv].omgkdot = eph[sv].omgdot - OMEGA_EARTH;
 	}
 
 	fclose(fp);
