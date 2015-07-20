@@ -181,8 +181,8 @@ typedef struct
 	// Working variables follow
 	double n; // Mean motion (Average angular velocity)
 	double sq1e2; // sqrt(1-e^2)
-	double A; // A
-	double omgkdot; // (OmegaDot-OmegaEdot)
+	double A; // Semi-major axis
+	double omgkdot; // OmegaDot-OmegaEdot
 } ephem_t;
 
 typedef struct
@@ -483,6 +483,14 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	vel[0] = -eph.omgkdot*pos[1] + xpkdot*cok - tmp*sok;
 	vel[1] = eph.omgkdot*pos[0] + xpkdot*sok + tmp*cok;
 	vel[2] = ypk*cik*ikdot + ypkdot*sik;
+
+	// Satellite clock correction
+	tk = g.sec - eph.toc.sec;
+
+	if(tk>SECONDS_IN_HALF_WEEK)
+		tk -= SECONDS_IN_WEEK;
+	else if(tk<-SECONDS_IN_HALF_WEEK)
+		tk += SECONDS_IN_WEEK;
 
 	clk[0] = eph.af0 + tk*(eph.af1 + tk*eph.af2) + relativistic - eph.tgd;  
 	clk[1] = eph.af1 + 2.0*tk*eph.af2; 
@@ -980,6 +988,7 @@ void computeRange(range_t *rho, ephem_t eph, gpstime_t g, double xyz[])
 	double los[3];
 	double tau;
 	double range,rate;
+	double xrot,yrot;
 	
 	// SV position at time of the pseudorange observation.
 	satpos(eph, g, pos, vel, clk);
@@ -994,8 +1003,10 @@ void computeRange(range_t *rho, ephem_t eph, gpstime_t g, double xyz[])
 	pos[2] -= vel[2]*tau;
 
 	// Earth rotation correction. The change in velocity can be neglected.
-	pos[0] += pos[1]*OMEGA_EARTH*tau;
-	pos[1] -= pos[0]*OMEGA_EARTH*tau;
+	xrot = pos[0] + pos[1]*OMEGA_EARTH*tau;
+	yrot = pos[1] - pos[0]*OMEGA_EARTH*tau;
+	pos[0] = xrot;
+	pos[1] = yrot;
 
 	// New observer to satellite vector and satellite range.
 	subVect(los, pos, xyz);
