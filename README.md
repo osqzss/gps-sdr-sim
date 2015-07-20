@@ -80,6 +80,12 @@ tx config file=gpssim.bin format=bin
 tx start
 ```
 
+Also, you can execute those commandline below as `bladeRF-cli` script:
+
+```
+> bladeRF-cli -s bladerf.script
+```
+
 For the HackRF:
 
 ```
