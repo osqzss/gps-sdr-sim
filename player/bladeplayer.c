@@ -4,16 +4,16 @@
 #include <stdio.h>
 #include <libbladeRF.h>
 
-#define TX_FREQUENCY	1575420000
-#define TX_SAMPLERATE	2600000
-#define TX_BANDWIDTH	2500000
-#define TX_VGA1			-25
-#define TX_VGA2			0
+#define TX_FREQUENCY    1575420000
+#define TX_SAMPLERATE   2600000
+#define TX_BANDWIDTH    2500000
+#define TX_VGA1         -25
+#define TX_VGA2         0
 
-#define NUM_BUFFERS			32
-#define SAMPLES_PER_BUFFER	(32 * 1024)
-#define NUM_TRANSFERS		16
-#define TIMEOUT_MS			1000
+#define NUM_BUFFERS         32
+#define SAMPLES_PER_BUFFER  (32 * 1024)
+#define NUM_TRANSFERS       16
+#define TIMEOUT_MS          1000
 
 int main(int argc, char *argv[])
 {
@@ -140,9 +140,9 @@ int main(int argc, char *argv[])
 				case READ_FILE:
 					// Read from the input file
 					samples_populated = fread(tx_buffer_current,
-										2 * sizeof(int16_t),
-										buffer_samples_remaining,
-										fp);
+							2 * sizeof(int16_t),
+							buffer_samples_remaining,
+							fp);
 			
 					// If the end of the file was reached, pad the rest of the buffer and finish.
 					if (feof(fp)) {
