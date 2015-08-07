@@ -1396,22 +1396,20 @@ int main(int argc, char *argv[])
 	{
 		range_t tmp;
 		double ref[3]={0.0};
-		double phase_offset,phase_offset_time;
-		double phase_ini,phase_ini_time;
+		double r_ref,r_xyz;
+		double phase_ini;
 
 		sv = chan[i].prn-1;
 
 		computeRange(&tmp, eph[sv], grx, ref);
-		phase_offset_time = grx.sec - tmp.range/SPEED_OF_LIGHT;
-		phase_offset = tmp.range/LAMBDA_L1;
-		phase_offset -= floor(phase_offset);
+		r_ref = tmp.range;
 
 		computeRange(&tmp, eph[sv], grx, xyz[0]);
-		phase_ini_time = grx.sec - tmp.range/SPEED_OF_LIGHT;
-		phase_ini = phase_offset + (phase_ini_time - phase_offset_time)*SPEED_OF_LIGHT/LAMBDA_L1;
-		phase_ini -= floor(phase_ini);
+		r_xyz = tmp.range;
 
-		chan[i].carr_phase = phase_ini;
+		phase_ini = (2.0*r_ref - r_xyz)/LAMBDA_L1;
+
+		chan[i].carr_phase = phase_ini - floor(phase_ini);
 	}
 
 	////////////////////////////////////////////////////////////
