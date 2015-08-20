@@ -5,7 +5,7 @@ all: gps-sdr-sim
 
 SHELL=/bin/bash
 CC=gcc
-CFLAGS=-fopenmp -O3
+CFLAGS=-fopenmp -O3 -Wall
 LDFLAGS=-lm -fopenmp
 
 gps-sdr-sim: gpssim.o

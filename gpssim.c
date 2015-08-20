@@ -18,15 +18,28 @@ typedef int bool;
 #define false 0
 #endif
 
+/*! \brief Maximum length of a line in a text file (RINEX, motion) */
 #define MAX_CHAR (100)
 
+/*! \brief Maximum number of satellites in RINEX file */
 #define MAX_SAT (32)
+/*! \brief Maximum number of channels we simulate */
 #define MAX_CHAN (16)
 
+/*! \brief Maximum number of user motion waypoints */
 #define USER_MOTION_SIZE (3000) // max 300 sec at 10Hz
 
+/*! \brief Number of subframes */
 #define N_SBF (51) // 6 seconds per subframe, 6 sec * 51 = 306 sec (max)
-#define N_DWRD (N_SBF*10) // 10 word per subframe
+
+/*! \brief Number of words per subframe */
+#define N_DWRD_SBF (10) // 10 word per subframe
+
+/*! \brief Number of words */
+#define N_DWRD (N_SBF*N_DWRD_SBF) // 10 word per subframe
+
+/*! \brief C/A code sequence length */
+#define CA_SEQ_LEN (1023)
 
 #define SECONDS_IN_WEEK 604800.0
 #define SECONDS_IN_HALF_WEEK 302400.0
@@ -47,12 +60,17 @@ typedef int bool;
 #define OMEGA_EARTH 7.2921151467e-5
 #define PI 3.1415926535898
 
+#define WGS84_RADIUS	6378137.0
+#define WGS84_ECCENTRICITY 0.0818191908426
+
 #define R2D 57.2957795131
 
 #define SPEED_OF_LIGHT 2.99792458e8
 #define LAMBDA_L1 0.190293672798365
 
+/*! \brief GPS L1 Carrier frequency */
 #define CARR_FREQ (1575.42e6)
+/*! \brief C/A code frequency */
 #define CODE_FREQ (1.023e6)
 #define CARR_TO_CODE (1.0/1540.0)
 
@@ -135,54 +153,61 @@ int cosTable512[] = {
 };
 #endif
 
+/*! \file gpssim.c
+ *  \brief GPS Satellite Simulator
+ */
+
+/*! \brief Structure representing GPS time */
 typedef struct
 {
-	int week;
-	double sec;
+	int week;	/*!< GPS week number (since January 1980) */
+	double sec; 	/*!< second inside the GPS \a week */
 } gpstime_t;
 
+/*! \brief Structure repreenting UTC time */
 typedef struct
 {
-	int y;
-	int m;
-	int d;
-	int hh;
-	int mm;
-	double sec;
+	int y; 		/*!< Calendar year */
+	int m;		/*!< Calendar month */
+	int d;		/*!< Calendar day */
+	int hh;		/*!< Calendar hour */
+	int mm;		/*!< Calendar minutes */
+	double sec;	/*!< Calendar seconds */
 } datetime_t;
 
+/*! \brief Structure representing ephemeris of a single satellite */
 typedef struct
 {
-	int vflg;
-	gpstime_t toc;
-	gpstime_t toe;
-	int iodc;
-	int iode;
-	double deltan;
-	double cuc;
-	double cus;
-	double cic;
-	double cis;
-	double crc;
-	double crs;
-	double ecc;
-	double sqrta;
-	double m0;
-	double omg0;
-	double inc0;
+	int vflg;	/*!< Valid Flag */
+	gpstime_t toc;	/*!< Time of Clock */
+	gpstime_t toe;	/*!< Time of Ephemeris */
+	int iodc;	/*!< Issue of Data, Clock */
+	int iode;	/*!< Isuse of Data, Ephemeris */
+	double deltan;	/*!< Delta-N (radians/sec) */
+	double cuc;	/*!< Cuc (radians) */
+	double cus;	/*!< Cus (radians) */
+	double cic;	/*!< Correction to inclination cos (radians) */
+	double cis;	/*!< Correction to inclination sin (radians) */
+	double crc;	/*!< Correction to radius cos (meters) */
+	double crs;	/*!< Correction to radius sin (meters) */
+	double ecc;	/*!< e Eccentricity */
+	double sqrta;	/*!< sqrt(A) (sqrt(m)) */
+	double m0;	/*!< Mean anamoly (radians) */
+	double omg0;	/*!< Longitude of the ascending node (radians) */
+	double inc0;	/*!< Inclination (radians) */
 	double aop;
-	double omgdot;
-	double idot;
-	double af0;
-	double af1;
-	double af2;
-	double tgd;
+	double omgdot;	/*!< Omega dot (radians/s) */
+	double idot;	/*!< IDOT (radians/s) */
+	double af0;	/*!< Clock offset (seconds) */
+	double af1;	/*!< rate (sec/sec) */
+	double af2;	/*!< acceleration (sec/sec^2) */
+	double tgd;	/*!< Group delay L2 bias */
 
 	// Working variables follow
-	double n; // Mean motion (Average angular velocity)
-	double sq1e2; // sqrt(1-e^2)
-	double A; // Semi-major axis
-	double omgkdot; // OmegaDot-OmegaEdot
+	double n; 	/*!< Mean motion (Average angular velocity) */
+	double sq1e2;	/*!< sqrt(1-e^2) */
+	double A;	/*!< Semi-major axis */
+	double omgkdot; /*!< OmegaDot-OmegaEdot */
 } ephem_t;
 
 typedef struct
@@ -192,22 +217,29 @@ typedef struct
 	double rate;
 } range_t;
 
+/*! \brief Structure representing a Channel */
 typedef struct
 {
-	int prn;
-	int ca[1023];
-	double f_carr,f_code;
-	double carr_phase,code_phase;
-	gpstime_t g0;
-	unsigned long dwrd[N_DWRD];
-	int iword;
-	int ibit;
-	int icode;
-	int dataBit;
-	int codeCA;
-	short *iq_buff;
+	int prn;	/*< PRN Number */
+	int ca[CA_SEQ_LEN]; /*< C/A Sequence */
+	double f_carr;	/*< Carrier frequency */
+	double f_code;	/*< Code frequency */
+	double carr_phase; /*< Carrier phase */
+	double code_phase; /*< Code phase */
+	gpstime_t g0;	/*!< GPS time at start */
+	unsigned long dwrd[N_DWRD]; /*!< Data words of sub-frame */
+	int iword;	/*!< initial word */
+	int ibit;	/*!< initial bit */
+	int icode;	/*!< initial code */
+	int dataBit;	/*!< current data bit */
+	int codeCA;	/*!< current C/A code */
+	short *iq_buff;	/*< buffer of I/Q samples */
 } channel_t;
 
+/* !\brief generate the C/A code sequence for a given Satellite Vehicle PRN
+ *  \param[in] prn PRN nuber of the Satellite Vehicle
+ *  \param[out] ca Caller-allocated integer array of 1023 bytes
+ */
 void codegen(int *ca, int prn)
 {
 	int delay[] = {
@@ -216,16 +248,18 @@ void codegen(int *ca, int prn)
 		473, 474, 509, 512, 513, 514, 515, 516, 859, 860,
 		861, 862};
 	
-	int g1[1023],g2[1023],r1[10],r2[10],c1,c2;
+	int g1[CA_SEQ_LEN], g2[CA_SEQ_LEN];
+	int r1[N_DWRD_SBF], r2[N_DWRD_SBF];
+	int c1, c2;
 	int i,j;
 
 	if (prn<1 || prn>32)
 		return;
 
-	for (i=0;i<10;i++)
+	for (i=0; i<N_DWRD_SBF; i++)
 		r1[i] = r2[i] = -1;
 
-	for (i=0; i<1023; i++) 
+	for (i=0; i<CA_SEQ_LEN; i++)
 	{
 		g1[i] = r1[9];
 		g2[i] = r2[9];
@@ -241,13 +275,17 @@ void codegen(int *ca, int prn)
 		r2[0] = c2;
 	}
 
-	for (i=0,j=1023-delay[prn-1]; i<1023; i++,j++)
-		ca[i] = (1-g1[i]*g2[j%1023])/2;
+	for (i=0,j=CA_SEQ_LEN-delay[prn-1]; i<CA_SEQ_LEN; i++,j++)
+		ca[i] = (1-g1[i]*g2[j%CA_SEQ_LEN])/2;
 	
 	return;
 }
 
-void date2gps(datetime_t *t, gpstime_t *g)
+/*! \brief Convert a UTC date into a GPS date
+ *  \param[in] t input date in UTC form
+ *  \param[out] g output date in GPS form
+ */
+void date2gps(const datetime_t *t, gpstime_t *g)
 {
 	int doy[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
 	int ye;
@@ -272,14 +310,18 @@ void date2gps(datetime_t *t, gpstime_t *g)
 	return;
 }
 
-void xyz2llh(double *xyz, double *llh)
+/*! \brief Convert Earth-centered Earth-fixed (ECEF) into Lat/Long/Heighth
+ *  \param[in] xyz Input Array of X, Y and Z ECEF coordinates
+ *  \param[out] llh Output Array of Latitude, Longitude and Height
+ */
+void xyz2llh(const double *xyz, double *llh)
 {
 	double a,eps,e,e2;
 	double x,y,z;
 	double rho2,dz,zdz,nh,slat,n,dz_new;
 
-	a = 6378137.0;
-	e = 0.0818191908426;
+	a = WGS84_RADIUS;
+	e = WGS84_ECCENTRICITY;
 
 	eps = 1.0e-3;
 	e2 = e*e;
@@ -312,7 +354,11 @@ void xyz2llh(double *xyz, double *llh)
 	return;
 }
 
-void llh2xyz(double *llh, double *xyz)
+/*! \brief Convert Lat/Long/Height into Earth-centered Earth-fixed (ECEF)
+ *  \param[in] llh Input Array of Latitude, Longitude and Height
+ *  \param[out] xyz Output Array of X, Y and Z ECEF coordinates
+ */
+void llh2xyz(const const double *llh, double *xyz)
 {
 	double n;
 	double a;
@@ -325,8 +371,8 @@ void llh2xyz(double *llh, double *xyz)
 	double d,nph;
 	double tmp;
 
-	a = 6378137.0;
-	e = 0.0818191908426;
+	a = WGS84_RADIUS;
+	e = WGS84_ECCENTRICITY;
 	e2 = e*e;
 
 	clat = cos(llh[0]);
@@ -346,7 +392,11 @@ void llh2xyz(double *llh, double *xyz)
 	return;
 }
 
-void ltcmat(double *llh, double t[3][3])
+/*! \brief Compute the intermediate matrix for LLH to ECEF
+ *  \param[in] llh Input position in Latitude-Longitude-Height format
+ *  \param[out] t Three-by-Three output matrix
+ */
+void ltcmat(const double *llh, double t[3][3])
 {
 	double slat, clat;
 	double slon, clon;
@@ -369,7 +419,12 @@ void ltcmat(double *llh, double t[3][3])
 	return;
 }
 
-void ecef2neu(double *xyz, double t[3][3], double *neu)
+/*! \brief Convert Earth-centered Earth-Fixed to ?
+ *  \param[in] xyz Input position as vector in ECEF format
+ *  \param[in] t Intermediate matrix computed by \ref ltcmat
+ *  \param[out] neu Output position as North-East-Up format
+ */
+void ecef2neu(const double *xyz, double t[3][3], double *neu)
 {
 	neu[0] = t[0][0]*xyz[0] + t[0][1]*xyz[1] + t[0][2]*xyz[2];
 	neu[1] = t[1][0]*xyz[0] + t[1][1]*xyz[1] + t[1][2]*xyz[2];
@@ -378,7 +433,11 @@ void ecef2neu(double *xyz, double t[3][3], double *neu)
 	return;
 }
 
-void neu2azel(double *azel, double *neu)
+/*! \brief Convert North-Eeast-Up to Azimuth + Elevation
+ *  \param[in] neu Input position in North-East-Up format
+ *  \param[out] azel Output array of azimuth + elevation as double
+ */
+void neu2azel(double *azel, const double *neu)
 {
 	double ne;
 
@@ -392,6 +451,13 @@ void neu2azel(double *azel, double *neu)
 	return;
 }
 
+/*! \brief Compute Satellite position, velocity and clock at given time
+ *  \param[in] eph Ephemeris data of the satellite
+ *  \param[in] g GPS time at which position is to be computed
+ *  \param[out] pos Computed position (vector)
+ *  \param[out] vel Computed velociy (vector)
+ *  \param[clk] clk Computed clock
+ */
 void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 {
 	// Computing Satellite Velocity using the Broadcast Ephemeris
@@ -498,7 +564,11 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	return;
 }
 
-void eph2sbf(ephem_t eph, unsigned long sbf[5][10])
+/*! \brief Compute Subframe from Ephemeris
+ *  \param[in] eph Ephemeris of given SV
+ *  \param[out] sbf Array of five sub-frames, 10 long words each
+ */
+void eph2sbf(const ephem_t eph, unsigned long sbf[5][N_DWRD_SBF])
 {
 	unsigned long wn;
 	unsigned long toe;
@@ -624,6 +694,10 @@ void eph2sbf(ephem_t eph, unsigned long sbf[5][10])
 	return;
 }
 
+/*! \brief Count number of bits set to 1
+ *  \param[in] v long word in whihc bits are counted
+ *  \returns Count of bits set to 1
+ */
 unsigned long countBits(unsigned long v)
 {
 	unsigned long c;
@@ -641,6 +715,11 @@ unsigned long countBits(unsigned long v)
 	return(c);
 }
 
+/*! \brief Compute the Checksum for one given word of a subframe
+ *  \param[in] source The input data
+ *  \param[in] nib Does this word contain non-information-bearing bits?
+ *  \returns Computed Checksum
+ */
 unsigned long computeChecksum(unsigned long source, int nib)
 {
 	/*
@@ -706,7 +785,12 @@ unsigned long computeChecksum(unsigned long source, int nib)
 	return(D);
 }
 
-int checkExpDesignator(char *str, int len)
+/*! \brief Replace all 'E' exponential designators to 'D'
+ *  \param str String in which all occurrences of 'E' are replaced with *  'D'
+ *  \param len Length of input string in bytes
+ *  \returns Number of characters replaced
+ */
+int replaceExpDesignator(char *str, int len)
 {
 	int i,n=0;
 
@@ -722,7 +806,12 @@ int checkExpDesignator(char *str, int len)
 	return(n);
 }
 
-int readRinexNav(ephem_t eph[], char *fname)
+/*! \brief Read Ephemersi data from the RINEX Navigation file */
+/*  \param[out] eph Array of Output SV ephemeris data
+ *  \param[in] fname File name of the RINEX file
+ *  \returns Number of SV found in the file, -1 on error
+ */
+int readRinexNav(ephem_t eph[], const char *fname)
 {
 	FILE *fp;
 	int nsat;
@@ -802,17 +891,17 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19); // tmp[15]='E';
+				replaceExpDesignator(tmp, 19); // tmp[15]='E';
 				eph[sv].af0 = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].af1 = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].af2 = atof(tmp);
 
 				// BROADCAST ORBIT - 1
@@ -821,22 +910,22 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].iode = (int)atof(tmp);
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].crs = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].deltan = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].m0 = atof(tmp);
 
 				// BROADCAST ORBIT - 2
@@ -845,22 +934,22 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].cuc = atof(tmp);
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].ecc = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].cus = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].sqrta = atof(tmp);
 
 				// BROADCAST ORBIT - 3
@@ -869,22 +958,22 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].toe.sec = atof(tmp);
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].cic = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].omg0 = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].cis = atof(tmp);
 
 				// BROADCAST ORBIT - 4
@@ -893,22 +982,22 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].inc0 = atof(tmp);
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].crc = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].aop = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].omgdot = atof(tmp);
 
 				// BROADCAST ORBIT - 5
@@ -917,12 +1006,12 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].idot = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].toe.week = (int)atof(tmp);
 
 				// BROADCAST ORBIT - 6
@@ -931,12 +1020,12 @@ int readRinexNav(ephem_t eph[], char *fname)
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].tgd = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].iodc = (int)atof(tmp);
 
 				// BROADCAST ORBIT - 7
@@ -963,7 +1052,12 @@ int readRinexNav(ephem_t eph[], char *fname)
 	return(nsat);
 }
 
-void subVect(double *y, double *x1, double *x2)
+/*! \brief Subtract two vectors of double
+ *  \param[out] y Result of subtraction
+ *  \param[in] x1 Minuend of subtracion
+ *  \param[in] x2 Subtrahend of subtracion
+ */
+void subVect(double *y, const double *x1, const double *x2)
 {
 	y[0] = x1[0]-x2[0];
 	y[1] = x1[1]-x2[1];
@@ -972,16 +1066,31 @@ void subVect(double *y, double *x1, double *x2)
 	return;
 }
 
-double normVect(double *x)
+/*! \brief Compute Norm of Vector
+ *  \param[in] x Input vector
+ *  \returns Length (Norm) of the input vector
+ */
+double normVect(const double *x)
 {
 	return(sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]));
 }
 
-double dotProd(double *x1, double *x2)
+/*! \brief Compute dot-product of two vectors
+ *  \param[in] x1 First multiplicand
+ *  \param[in] x2 Second multiplicand
+ *  \returns Dot-product of both multiplicands
+ */
+double dotProd(const double *x1, const double *x2)
 {
 	return(x1[0]*x2[0]+x1[1]*x2[1]+x1[2]*x2[2]);
 }
 
+/*! \brief Compute range between a satellite and the receiver
+ *  \param[out] rho The computed range
+ *  \param[in] eph Ephemeris data of the satellite
+ *  \param[in] g GPS time at time of receiving the signal
+ *  \param[in] xyz position of the receiver
+ */
 void computeRange(range_t *rho, ephem_t eph, gpstime_t g, double xyz[])
 {
 	double pos[3],vel[3],clk[2];
@@ -1027,6 +1136,12 @@ void computeRange(range_t *rho, ephem_t eph, gpstime_t g, double xyz[])
 	return;
 }
 
+/*! \brief Compute the code phase for a given channel (satellite)
+ *  \param chan Channel on which we operate (is updated)
+ *  \param[in] rho0 Range at start of interval
+ *  \param[in] rho1 Current range, after \a dt has expired
+ *  \param[in dt delta-t (time difference) in seconds
+ */
 void computeCodePhase(channel_t *chan, range_t rho0, range_t rho1, double dt)
 {
 	double ms;
@@ -1044,7 +1159,7 @@ void computeCodePhase(channel_t *chan, range_t rho0, range_t rho1, double dt)
 	ms = (((rho0.g.sec-chan->g0.sec)+6.0) - rho0.range/SPEED_OF_LIGHT)*1000.0;
 
 	ims = (int)ms;
-	chan->code_phase = (ms-(double)ims)*1023.0; // in chip
+	chan->code_phase = (ms-(double)ims)*CA_SEQ_LEN; // in chip
 
 	chan->iword = ims/600; // 1 word = 30 bits = 600 ms
 	ims -= chan->iword*600;
@@ -1060,7 +1175,12 @@ void computeCodePhase(channel_t *chan, range_t rho0, range_t rho1, double dt)
 	return;
 }
 
-int readUserMotion(double xyz[USER_MOTION_SIZE][3], char *filename)
+/*! \brief Read the list of user motions from the input file
+ *  \param[out] xyz Output array of ECEF vectors for user motion
+ *  \param[[in] filename File name of the text input file
+ *  \returns Number of user data motion records read, -1 on error
+ */
+int readUserMotion(double xyz[USER_MOTION_SIZE][3], const char *filename)
 {
 	FILE *fp;
 	int numd;
@@ -1123,7 +1243,7 @@ int main(int argc, char *argv[])
 
 	int isbf,iwrd;
 	unsigned long tow;
-	unsigned long sbf[5][10];
+	unsigned long sbf[5][N_DWRD_SBF];
 	unsigned long sbfwrd;
 	unsigned long prevwrd;
 	int nib;
@@ -1430,7 +1550,7 @@ int main(int argc, char *argv[])
 
 		for (isbf=0; isbf<N_SBF; isbf++)
 		{
-			for (iwrd=0; iwrd<10; iwrd++)
+			for (iwrd=0; iwrd<N_DWRD_SBF; iwrd++)
 			{
 				sbfwrd = sbf[(isbf+4)%5][iwrd]; // Start from subframe 5
 
@@ -1443,9 +1563,9 @@ int main(int argc, char *argv[])
 				
 				nib = ((iwrd==1)||(iwrd==9))?1:0; // Non-information bearing bits for word 2 and 10
 
-				chan[i].dwrd[isbf*10+iwrd] = computeChecksum(sbfwrd, nib);
+				chan[i].dwrd[isbf*N_DWRD_SBF+iwrd] = computeChecksum(sbfwrd, nib);
 
-				prevwrd = chan[i].dwrd[isbf*10+iwrd];
+				prevwrd = chan[i].dwrd[isbf*N_DWRD_SBF+iwrd];
 			}
 
 			tow++; // Next subframe
@@ -1518,9 +1638,9 @@ int main(int argc, char *argv[])
 				// Update code phase
 				chan[i].code_phase += chan[i].f_code * delt;
 
-				if (chan[i].code_phase>=1023.0)
+				if (chan[i].code_phase>=CA_SEQ_LEN)
 				{
-					chan[i].code_phase -= 1023.0;
+					chan[i].code_phase -= CA_SEQ_LEN;
 
 					chan[i].icode++;
 					
