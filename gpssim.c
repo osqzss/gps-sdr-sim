@@ -18,14 +18,21 @@ typedef int bool;
 #define false 0
 #endif
 
+/*! \brief Maximum length of a line in a text file (RINEX, motion) */
 #define MAX_CHAR (100)
 
+/*! \brief Maximum number of satellites in RINEX file */
 #define MAX_SAT (32)
+/*! \brief Maximum number of channels we simulate */
 #define MAX_CHAN (16)
 
+/*! \brief Maximum number of user motion waypoints */
 #define USER_MOTION_SIZE (3000) // max 300 sec at 10Hz
 
+/*! \brief Number of subframes */
 #define N_SBF (51) // 6 seconds per subframe, 6 sec * 51 = 306 sec (max)
+
+/*! \brief Number of words */
 #define N_DWRD (N_SBF*10) // 10 word per subframe
 
 #define SECONDS_IN_WEEK 604800.0
@@ -52,7 +59,9 @@ typedef int bool;
 #define SPEED_OF_LIGHT 2.99792458e8
 #define LAMBDA_L1 0.190293672798365
 
+/*! \brief GPS L1 Carrier frequency */
 #define CARR_FREQ (1575.42e6)
+/*! \brief C/A code frequency */
 #define CODE_FREQ (1.023e6)
 #define CARR_TO_CODE (1.0/1540.0)
 
@@ -135,54 +144,61 @@ int cosTable512[] = {
 };
 #endif
 
+/*! \file gpssim.c
+ *  \brief GPS Satellite Simulator
+ */
+
+/*! \brief Structure representing GPS time */
 typedef struct
 {
-	int week;
-	double sec;
+	int week;	/*!< GPS week number (since January 1980) */
+	double sec; 	/*!< second inside the GPS \a week */
 } gpstime_t;
 
+/*! \brief Structure repreenting UTC time */
 typedef struct
 {
-	int y;
-	int m;
-	int d;
-	int hh;
-	int mm;
-	double sec;
+	int y; 		/*!< Calendar year */
+	int m;		/*!< Calendar month */
+	int d;		/*!< Calendar day */
+	int hh;		/*!< Calendar hour */
+	int mm;		/*!< Calendar minutes */
+	double sec;	/*!< Calendar seconds */
 } datetime_t;
 
+/*! \brief Structure representing ephemeris of a single satellite */
 typedef struct
 {
-	int vflg;
-	gpstime_t toc;
-	gpstime_t toe;
-	int iodc;
-	int iode;
-	double deltan;
-	double cuc;
-	double cus;
-	double cic;
-	double cis;
-	double crc;
-	double crs;
-	double ecc;
-	double sqrta;
-	double m0;
-	double omg0;
-	double inc0;
+	int vflg;	/*!< Valid Flag */
+	gpstime_t toc;	/*!< Time of Clock */
+	gpstime_t toe;	/*!< Time of Ephemeris */
+	int iodc;	/*!< Issue of Data, Clock */
+	int iode;	/*!< Isuse of Data, Ephemeris */
+	double deltan;	/*!< Delta-N (radians/sec) */
+	double cuc;	/*!< Cuc (radians) */
+	double cus;	/*!< Cus (radians) */
+	double cic;	/*!< Correction to inclination cos (radians) */
+	double cis;	/*!< Correction to inclination sin (radians) */
+	double crc;	/*!< Correction to radius cos (meters) */
+	double crs;	/*!< Correction to radius sin (meters) */
+	double ecc;	/*!< e Eccentricity */
+	double sqrta;	/*!< sqrt(A) (sqrt(m)) */
+	double m0;	/*!< Mean anamoly (radians) */
+	double omg0;	/*!< Longitude of the ascending node (radians) */
+	double inc0;	/*!< Inclination (radians) */
 	double aop;
-	double omgdot;
-	double idot;
-	double af0;
-	double af1;
-	double af2;
-	double tgd;
+	double omgdot;	/*!< Omega dot (radians/s) */
+	double idot;	/*!< IDOT (radians/s) */
+	double af0;	/*!< Clock offset (seconds) */
+	double af1;	/*!< rate (sec/sec) */
+	double af2;	/*!< acceleration (sec/sec^2) */
+	double tgd;	/*!< Group delay L2 bias */
 
 	// Working variables follow
-	double n; // Mean motion (Average angular velocity)
-	double sq1e2; // sqrt(1-e^2)
-	double A; // Semi-major axis
-	double omgkdot; // OmegaDot-OmegaEdot
+	double n; 	/*!< Mean motion (Average angular velocity) */
+	double sq1e2;	/*!< sqrt(1-e^2) */
+	double A;	/*!< Semi-major axis */
+	double omgkdot; /*!< OmegaDot-OmegaEdot */
 } ephem_t;
 
 typedef struct
@@ -192,22 +208,29 @@ typedef struct
 	double rate;
 } range_t;
 
+/*! \brief Structure representing a Channel */
 typedef struct
 {
-	int prn;
-	int ca[1023];
-	double f_carr,f_code;
-	double carr_phase,code_phase;
-	gpstime_t g0;
-	unsigned long dwrd[N_DWRD];
-	int iword;
-	int ibit;
-	int icode;
-	int dataBit;
-	int codeCA;
-	short *iq_buff;
+	int prn;	/*< PRN Number */
+	int ca[1023];	/*< C/A Sequence */
+	double f_carr;	/*< Carrier frequency */
+	double f_code;	/*< Code frequency */
+	double carr_phase; /*< Carrier phase */
+	double code_phase; /*< Code phase */
+	gpstime_t g0;	/*!< GPS time at start */
+	unsigned long dwrd[N_DWRD]; /*!< Data words of sub-frame */
+	int iword;	/*!< initial word */
+	int ibit;	/*!< initial bit */
+	int icode;	/*!< initial code */
+	int dataBit;	/*!< current data bit */
+	int codeCA;	/*!< current C/A code */
+	short *iq_buff;	/*< buffer of I/Q samples */
 } channel_t;
 
+/* !\brief generate the C/A code sequence for a given Satellite Vehicle PRN
+ *  \param[in] prn PRN nuber of the Satellite Vehicle
+ *  \param[out] ca Caller-allocated integer array of 1023 bytes
+ */
 void codegen(int *ca, int prn)
 {
 	int delay[] = {
@@ -247,6 +270,10 @@ void codegen(int *ca, int prn)
 	return;
 }
 
+/*! \brief Convert a UTC date into a GPS date
+ *  \param[in] t input date in UTC form
+ *  \param[out] g output date in GPS form
+ */
 void date2gps(const datetime_t *t, gpstime_t *g)
 {
 	int doy[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
@@ -272,6 +299,10 @@ void date2gps(const datetime_t *t, gpstime_t *g)
 	return;
 }
 
+/*! \brief Convert Earth-centered Earth-fixed (ECEF) into Lat/Long/Heighth
+ *  \param[in] xyz Input Array of X, Y and Z ECEF coordinates
+ *  \param[out] llh Output Array of Latitude, Longitude and Height
+ */
 void xyz2llh(const double *xyz, double *llh)
 {
 	double a,eps,e,e2;
@@ -312,6 +343,10 @@ void xyz2llh(const double *xyz, double *llh)
 	return;
 }
 
+/*! \brief Convert Lat/Long/Height into Earth-centered Earth-fixed (ECEF)
+ *  \param[in] llh Input Array of Latitude, Longitude and Height
+ *  \param[out] xyz Output Array of X, Y and Z ECEF coordinates
+ */
 void llh2xyz(const const double *llh, double *xyz)
 {
 	double n;
@@ -346,6 +381,10 @@ void llh2xyz(const const double *llh, double *xyz)
 	return;
 }
 
+/*! \brief Compute the intermediate matrix for LLH to ECEF
+ *  \param[in] llh Input position in Latitude-Longitude-Height format
+ *  \param[out] t Three-by-Three output matrix
+ */
 void ltcmat(const double *llh, double t[3][3])
 {
 	double slat, clat;
@@ -369,6 +408,11 @@ void ltcmat(const double *llh, double t[3][3])
 	return;
 }
 
+/*! \brief Convert Earth-centered Earth-Fixed to ?
+ *  \param[in] xyz Input position as vector in ECEF format
+ *  \param[in] t Intermediate matrix computed by \ref ltcmat
+ *  \param[out] neu Output position as North-East-Up format
+ */
 void ecef2neu(const double *xyz, double t[3][3], double *neu)
 {
 	neu[0] = t[0][0]*xyz[0] + t[0][1]*xyz[1] + t[0][2]*xyz[2];
@@ -378,6 +422,10 @@ void ecef2neu(const double *xyz, double t[3][3], double *neu)
 	return;
 }
 
+/*! \brief Convert North-Eeast-Up to Azimuth + Elevation
+ *  \param[in] neu Input position in North-East-Up format
+ *  \param[out] azel Output array of azimuth + elevation as double
+ */
 void neu2azel(double *azel, const double *neu)
 {
 	double ne;
@@ -392,6 +440,13 @@ void neu2azel(double *azel, const double *neu)
 	return;
 }
 
+/*! \brief Compute Satellite position, velocity and clock at given time
+ *  \param[in] eph Ephemeris data of the satellite
+ *  \param[in] g GPS time at which position is to be computed
+ *  \param[out] pos Computed position (vector)
+ *  \param[out] vel Computed velociy (vector)
+ *  \param[clk] clk Computed clock
+ */
 void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 {
 	// Computing Satellite Velocity using the Broadcast Ephemeris
@@ -498,6 +553,10 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	return;
 }
 
+/*! \brief Compute Subframe from Ephemeris
+ *  \param[in] eph Ephemeris of given SV
+ *  \param[out] sbf Array of five sub-frames, 10 long words each
+ */
 void eph2sbf(const ephem_t eph, unsigned long sbf[5][10])
 {
 	unsigned long wn;
@@ -624,6 +683,10 @@ void eph2sbf(const ephem_t eph, unsigned long sbf[5][10])
 	return;
 }
 
+/*! \brief Count number of bits set to 1
+ *  \param[in] v long word in whihc bits are counted
+ *  \returns Count of bits set to 1
+ */
 unsigned long countBits(unsigned long v)
 {
 	unsigned long c;
@@ -641,6 +704,11 @@ unsigned long countBits(unsigned long v)
 	return(c);
 }
 
+/*! \brief Compute the Checksum for one given word of a subframe
+ *  \param[in] source The input data
+ *  \param[in] nib Does this word contain non-information-bearing bits?
+ *  \returns Computed Checksum
+ */
 unsigned long computeChecksum(unsigned long source, int nib)
 {
 	/*
@@ -706,6 +774,11 @@ unsigned long computeChecksum(unsigned long source, int nib)
 	return(D);
 }
 
+/*! \brief Replace all 'E' exponential designators to 'D'
+ *  \param str String in which all occurrences of 'E' are replaced with *  'D'
+ *  \param len Length of input string in bytes
+ *  \returns Number of characters replaced
+ */
 int checkExpDesignator(char *str, int len)
 {
 	int i,n=0;
@@ -722,6 +795,11 @@ int checkExpDesignator(char *str, int len)
 	return(n);
 }
 
+/*! \brief Read Ephemersi data from the RINEX Navigation file */
+/*  \param[out] eph Array of Output SV ephemeris data
+ *  \param[in] fname File name of the RINEX file
+ *  \returns Number of SV found in the file, -1 on error
+ */
 int readRinexNav(ephem_t eph[], const char *fname)
 {
 	FILE *fp;
@@ -963,6 +1041,11 @@ int readRinexNav(ephem_t eph[], const char *fname)
 	return(nsat);
 }
 
+/*! \brief Subtract two vectors of double
+ *  \param[out] y Result of subtraction
+ *  \param[in] x1 Minuend of subtracion
+ *  \param[in] x2 Subtrahend of subtracion
+ */
 void subVect(double *y, const double *x1, const double *x2)
 {
 	y[0] = x1[0]-x2[0];
@@ -972,16 +1055,31 @@ void subVect(double *y, const double *x1, const double *x2)
 	return;
 }
 
+/*! \brief Compute Norm of Vector
+ *  \param[in] x Input vector
+ *  \returns Length (Norm) of the input vector
+ */
 double normVect(const double *x)
 {
 	return(sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]));
 }
 
+/*! \brief Compute dot-product of two vectors
+ *  \param[in] x1 First multiplicand
+ *  \param[in] x2 Second multiplicand
+ *  \returns Dot-product of both multiplicands
+ */
 double dotProd(const double *x1, const double *x2)
 {
 	return(x1[0]*x2[0]+x1[1]*x2[1]+x1[2]*x2[2]);
 }
 
+/*! \brief Compute range between a satellite and the receiver
+ *  \param[out] rho The computed range
+ *  \param[in] eph Ephemeris data of the satellite
+ *  \param[in] g GPS time at time of receiving the signal
+ *  \param[in] xyz position of the receiver
+ */
 void computeRange(range_t *rho, ephem_t eph, gpstime_t g, double xyz[])
 {
 	double pos[3],vel[3],clk[2];
@@ -1027,6 +1125,12 @@ void computeRange(range_t *rho, ephem_t eph, gpstime_t g, double xyz[])
 	return;
 }
 
+/*! \brief Compute the code phase for a given channel (satellite)
+ *  \param chan Channel on which we operate (is updated)
+ *  \param[in] rho0 Range at start of interval
+ *  \param[in] rho1 Current range, after \a dt has expired
+ *  \param[in dt delta-t (time difference) in seconds
+ */
 void computeCodePhase(channel_t *chan, range_t rho0, range_t rho1, double dt)
 {
 	double ms;
@@ -1060,6 +1164,11 @@ void computeCodePhase(channel_t *chan, range_t rho0, range_t rho1, double dt)
 	return;
 }
 
+/*! \brief Read the list of user motions from the input file
+ *  \param[out] xyz Output array of ECEF vectors for user motion
+ *  \param[[in] filename File name of the text input file
+ *  \returns Number of user data motion records read, -1 on error
+ */
 int readUserMotion(double xyz[USER_MOTION_SIZE][3], const char *filename)
 {
 	FILE *fp;
