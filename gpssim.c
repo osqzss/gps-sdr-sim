@@ -782,7 +782,7 @@ unsigned long computeChecksum(unsigned long source, int nib)
  *  \param len Length of input string in bytes
  *  \returns Number of characters replaced
  */
-int checkExpDesignator(char *str, int len)
+int replaceExpDesignator(char *str, int len)
 {
 	int i,n=0;
 
@@ -883,17 +883,17 @@ int readRinexNav(ephem_t eph[], const char *fname)
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19); // tmp[15]='E';
+				replaceExpDesignator(tmp, 19); // tmp[15]='E';
 				eph[sv].af0 = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].af1 = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].af2 = atof(tmp);
 
 				// BROADCAST ORBIT - 1
@@ -902,22 +902,22 @@ int readRinexNav(ephem_t eph[], const char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].iode = (int)atof(tmp);
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].crs = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].deltan = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].m0 = atof(tmp);
 
 				// BROADCAST ORBIT - 2
@@ -926,22 +926,22 @@ int readRinexNav(ephem_t eph[], const char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].cuc = atof(tmp);
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].ecc = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].cus = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].sqrta = atof(tmp);
 
 				// BROADCAST ORBIT - 3
@@ -950,22 +950,22 @@ int readRinexNav(ephem_t eph[], const char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].toe.sec = atof(tmp);
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].cic = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].omg0 = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].cis = atof(tmp);
 
 				// BROADCAST ORBIT - 4
@@ -974,22 +974,22 @@ int readRinexNav(ephem_t eph[], const char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].inc0 = atof(tmp);
 
 				strncpy(tmp, str+22, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].crc = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].aop = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].omgdot = atof(tmp);
 
 				// BROADCAST ORBIT - 5
@@ -998,12 +998,12 @@ int readRinexNav(ephem_t eph[], const char *fname)
 
 				strncpy(tmp, str+3, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].idot = atof(tmp);
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].toe.week = (int)atof(tmp);
 
 				// BROADCAST ORBIT - 6
@@ -1012,12 +1012,12 @@ int readRinexNav(ephem_t eph[], const char *fname)
 
 				strncpy(tmp, str+41, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].tgd = atof(tmp);
 
 				strncpy(tmp, str+60, 19);
 				tmp[19] = 0;
-				checkExpDesignator(tmp, 19);
+				replaceExpDesignator(tmp, 19);
 				eph[sv].iodc = (int)atof(tmp);
 
 				// BROADCAST ORBIT - 7
