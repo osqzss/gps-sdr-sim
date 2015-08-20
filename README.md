@@ -38,7 +38,11 @@ Doppler for the GPS satellites in view. This simulated range data is
 then used to generate the digitized I/Q samples for the GPS signal.
 
 The bladeRF command line interface requires I/Q pairs stored as signed 
-16-bit integers, while the hackrf_transfer supports signed bytes.
+16-bit integers, while the hackrf_transfer and gps-sdr-sim-uhd.py
+supports signed bytes.
+
+HackRF + bladeRF require 2.6 MHz sample rate, while the USRP2 requires
+2.5 MHz (an even integral decimator of 100 MHz).
 
 ```
 Usage: gps-sdr-sim [options]
@@ -91,6 +95,13 @@ For the HackRF:
 ```
 > hackrf_transfer -t gpssim.bin -f 1575420000 -s 2600000 -a 1 -x 0
 ```
+
+For UHD supported devices (tested with USRP2 only):
+
+```
+> gps-sdr-sim-uhd.py -t gpssim.bin -s 2500000 -x 0
+```
+
 
 ### License
 
