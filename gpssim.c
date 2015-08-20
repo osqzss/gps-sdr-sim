@@ -32,8 +32,11 @@ typedef int bool;
 /*! \brief Number of subframes */
 #define N_SBF (51) // 6 seconds per subframe, 6 sec * 51 = 306 sec (max)
 
+/*! \brief Number of words per subframe */
+#define N_DWRD_SBF (10) // 10 word per subframe
+
 /*! \brief Number of words */
-#define N_DWRD (N_SBF*10) // 10 word per subframe
+#define N_DWRD (N_SBF*N_DWRD_SBF) // 10 word per subframe
 
 #define SECONDS_IN_WEEK 604800.0
 #define SECONDS_IN_HALF_WEEK 302400.0
@@ -242,13 +245,13 @@ void codegen(int *ca, int prn)
 		473, 474, 509, 512, 513, 514, 515, 516, 859, 860,
 		861, 862};
 	
-	int g1[1023],g2[1023],r1[10],r2[10],c1,c2;
+	int g1[1023], g2[1023], r1[N_DWRD_SBF], r2[N_DWRD_SBF], c1, c2;
 	int i,j;
 
 	if (prn<1 || prn>32)
 		return;
 
-	for (i=0;i<10;i++)
+	for (i=0; i<N_DWRD_SBF; i++)
 		r1[i] = r2[i] = -1;
 
 	for (i=0; i<1023; i++) 
@@ -560,7 +563,7 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
  *  \param[in] eph Ephemeris of given SV
  *  \param[out] sbf Array of five sub-frames, 10 long words each
  */
-void eph2sbf(const ephem_t eph, unsigned long sbf[5][10])
+void eph2sbf(const ephem_t eph, unsigned long sbf[5][N_DWRD_SBF])
 {
 	unsigned long wn;
 	unsigned long toe;
@@ -1235,7 +1238,7 @@ int main(int argc, char *argv[])
 
 	int isbf,iwrd;
 	unsigned long tow;
-	unsigned long sbf[5][10];
+	unsigned long sbf[5][N_DWRD_SBF];
 	unsigned long sbfwrd;
 	unsigned long prevwrd;
 	int nib;
@@ -1542,7 +1545,7 @@ int main(int argc, char *argv[])
 
 		for (isbf=0; isbf<N_SBF; isbf++)
 		{
-			for (iwrd=0; iwrd<10; iwrd++)
+			for (iwrd=0; iwrd<N_DWRD_SBF; iwrd++)
 			{
 				sbfwrd = sbf[(isbf+4)%5][iwrd]; // Start from subframe 5
 
@@ -1555,9 +1558,9 @@ int main(int argc, char *argv[])
 				
 				nib = ((iwrd==1)||(iwrd==9))?1:0; // Non-information bearing bits for word 2 and 10
 
-				chan[i].dwrd[isbf*10+iwrd] = computeChecksum(sbfwrd, nib);
+				chan[i].dwrd[isbf*N_DWRD_SBF+iwrd] = computeChecksum(sbfwrd, nib);
 
-				prevwrd = chan[i].dwrd[isbf*10+iwrd];
+				prevwrd = chan[i].dwrd[isbf*N_DWRD_SBF+iwrd];
 			}
 
 			tow++; // Next subframe
