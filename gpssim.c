@@ -247,7 +247,7 @@ void codegen(int *ca, int prn)
 	return;
 }
 
-void date2gps(datetime_t *t, gpstime_t *g)
+void date2gps(const datetime_t *t, gpstime_t *g)
 {
 	int doy[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
 	int ye;
@@ -272,7 +272,7 @@ void date2gps(datetime_t *t, gpstime_t *g)
 	return;
 }
 
-void xyz2llh(double *xyz, double *llh)
+void xyz2llh(const double *xyz, double *llh)
 {
 	double a,eps,e,e2;
 	double x,y,z;
@@ -312,7 +312,7 @@ void xyz2llh(double *xyz, double *llh)
 	return;
 }
 
-void llh2xyz(double *llh, double *xyz)
+void llh2xyz(const const double *llh, double *xyz)
 {
 	double n;
 	double a;
@@ -346,7 +346,7 @@ void llh2xyz(double *llh, double *xyz)
 	return;
 }
 
-void ltcmat(double *llh, double t[3][3])
+void ltcmat(const double *llh, double t[3][3])
 {
 	double slat, clat;
 	double slon, clon;
@@ -369,7 +369,7 @@ void ltcmat(double *llh, double t[3][3])
 	return;
 }
 
-void ecef2neu(double *xyz, double t[3][3], double *neu)
+void ecef2neu(const double *xyz, double t[3][3], double *neu)
 {
 	neu[0] = t[0][0]*xyz[0] + t[0][1]*xyz[1] + t[0][2]*xyz[2];
 	neu[1] = t[1][0]*xyz[0] + t[1][1]*xyz[1] + t[1][2]*xyz[2];
@@ -378,7 +378,7 @@ void ecef2neu(double *xyz, double t[3][3], double *neu)
 	return;
 }
 
-void neu2azel(double *azel, double *neu)
+void neu2azel(double *azel, const double *neu)
 {
 	double ne;
 
@@ -498,7 +498,7 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	return;
 }
 
-void eph2sbf(ephem_t eph, unsigned long sbf[5][10])
+void eph2sbf(const ephem_t eph, unsigned long sbf[5][10])
 {
 	unsigned long wn;
 	unsigned long toe;
@@ -722,7 +722,7 @@ int checkExpDesignator(char *str, int len)
 	return(n);
 }
 
-int readRinexNav(ephem_t eph[], char *fname)
+int readRinexNav(ephem_t eph[], const char *fname)
 {
 	FILE *fp;
 	int nsat;
@@ -963,7 +963,7 @@ int readRinexNav(ephem_t eph[], char *fname)
 	return(nsat);
 }
 
-void subVect(double *y, double *x1, double *x2)
+void subVect(double *y, const double *x1, const double *x2)
 {
 	y[0] = x1[0]-x2[0];
 	y[1] = x1[1]-x2[1];
@@ -972,12 +972,12 @@ void subVect(double *y, double *x1, double *x2)
 	return;
 }
 
-double normVect(double *x)
+double normVect(const double *x)
 {
 	return(sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]));
 }
 
-double dotProd(double *x1, double *x2)
+double dotProd(const double *x1, const double *x2)
 {
 	return(x1[0]*x2[0]+x1[1]*x2[1]+x1[2]*x2[2]);
 }
@@ -1060,7 +1060,7 @@ void computeCodePhase(channel_t *chan, range_t rho0, range_t rho1, double dt)
 	return;
 }
 
-int readUserMotion(double xyz[USER_MOTION_SIZE][3], char *filename)
+int readUserMotion(double xyz[USER_MOTION_SIZE][3], const char *filename)
 {
 	FILE *fp;
 	int numd;
