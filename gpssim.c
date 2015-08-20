@@ -38,6 +38,9 @@ typedef int bool;
 /*! \brief Number of words */
 #define N_DWRD (N_SBF*N_DWRD_SBF) // 10 word per subframe
 
+/*! \brief C/A code sequence length */
+#define CA_SEQ_LEN (1023)
+
 #define SECONDS_IN_WEEK 604800.0
 #define SECONDS_IN_HALF_WEEK 302400.0
 #define SECONDS_IN_DAY 86400.0
@@ -218,7 +221,7 @@ typedef struct
 typedef struct
 {
 	int prn;	/*< PRN Number */
-	int ca[1023];	/*< C/A Sequence */
+	int ca[CA_SEQ_LEN]; /*< C/A Sequence */
 	double f_carr;	/*< Carrier frequency */
 	double f_code;	/*< Code frequency */
 	double carr_phase; /*< Carrier phase */
@@ -245,7 +248,9 @@ void codegen(int *ca, int prn)
 		473, 474, 509, 512, 513, 514, 515, 516, 859, 860,
 		861, 862};
 	
-	int g1[1023], g2[1023], r1[N_DWRD_SBF], r2[N_DWRD_SBF], c1, c2;
+	int g1[CA_SEQ_LEN], g2[CA_SEQ_LEN];
+	int r1[N_DWRD_SBF], r2[N_DWRD_SBF];
+	int c1, c2;
 	int i,j;
 
 	if (prn<1 || prn>32)
@@ -254,7 +259,7 @@ void codegen(int *ca, int prn)
 	for (i=0; i<N_DWRD_SBF; i++)
 		r1[i] = r2[i] = -1;
 
-	for (i=0; i<1023; i++) 
+	for (i=0; i<CA_SEQ_LEN; i++)
 	{
 		g1[i] = r1[9];
 		g2[i] = r2[9];
@@ -270,8 +275,8 @@ void codegen(int *ca, int prn)
 		r2[0] = c2;
 	}
 
-	for (i=0,j=1023-delay[prn-1]; i<1023; i++,j++)
-		ca[i] = (1-g1[i]*g2[j%1023])/2;
+	for (i=0,j=CA_SEQ_LEN-delay[prn-1]; i<CA_SEQ_LEN; i++,j++)
+		ca[i] = (1-g1[i]*g2[j%CA_SEQ_LEN])/2;
 	
 	return;
 }
@@ -1154,7 +1159,7 @@ void computeCodePhase(channel_t *chan, range_t rho0, range_t rho1, double dt)
 	ms = (((rho0.g.sec-chan->g0.sec)+6.0) - rho0.range/SPEED_OF_LIGHT)*1000.0;
 
 	ims = (int)ms;
-	chan->code_phase = (ms-(double)ims)*1023.0; // in chip
+	chan->code_phase = (ms-(double)ims)*CA_SEQ_LEN; // in chip
 
 	chan->iword = ims/600; // 1 word = 30 bits = 600 ms
 	ims -= chan->iword*600;
@@ -1633,9 +1638,9 @@ int main(int argc, char *argv[])
 				// Update code phase
 				chan[i].code_phase += chan[i].f_code * delt;
 
-				if (chan[i].code_phase>=1023.0)
+				if (chan[i].code_phase>=CA_SEQ_LEN)
 				{
-					chan[i].code_phase -= 1023.0;
+					chan[i].code_phase -= CA_SEQ_LEN;
 
 					chan[i].icode++;
 					
