@@ -54,6 +54,9 @@ typedef int bool;
 #define OMEGA_EARTH 7.2921151467e-5
 #define PI 3.1415926535898
 
+#define WGS84_RADIUS	6378137.0
+#define WGS84_ECCENTRICITY 0.0818191908426
+
 #define R2D 57.2957795131
 
 #define SPEED_OF_LIGHT 2.99792458e8
@@ -309,8 +312,8 @@ void xyz2llh(const double *xyz, double *llh)
 	double x,y,z;
 	double rho2,dz,zdz,nh,slat,n,dz_new;
 
-	a = 6378137.0;
-	e = 0.0818191908426;
+	a = WGS84_RADIUS;
+	e = WGS84_ECCENTRICITY;
 
 	eps = 1.0e-3;
 	e2 = e*e;
@@ -360,8 +363,8 @@ void llh2xyz(const const double *llh, double *xyz)
 	double d,nph;
 	double tmp;
 
-	a = 6378137.0;
-	e = 0.0818191908426;
+	a = WGS84_RADIUS;
+	e = WGS84_ECCENTRICITY;
 	e2 = e*e;
 
 	clat = cos(llh[0]);
