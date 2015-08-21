@@ -2,7 +2,7 @@
 
 GPS-SDR-SIM generates GPS baseband signal data streams, which can be converted 
 to RF using software-defined radio (SDR) platforms, such as 
-[bladeRF](http://nuand.com/), [HackRF](https://github.com/mossmann/hackrf/wiki), and USRP.
+[bladeRF](http://nuand.com/), [HackRF](https://github.com/mossmann/hackrf/wiki), and [USRP](http://www.ettus.com/).
 
 ### Windows build instructions
 
@@ -41,7 +41,7 @@ The bladeRF command line interface requires I/Q pairs stored as signed
 16-bit integers, while the hackrf_transfer and gps-sdr-sim-uhd.py
 supports signed bytes.
 
-HackRF + bladeRF require 2.6 MHz sample rate, while the USRP2 requires
+HackRF and bladeRF require 2.6 MHz sample rate, while the USRP2 requires
 2.5 MHz (an even integral decimator of 100 MHz).
 
 ```
