@@ -498,6 +498,7 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
 	ek = mk;
 	ekold = ek + 1.0;
   
+	OneMinusecosE = 0; // Suppress the uninitialized warning.
 	while(fabs(ek-ekold)>1.0E-14)
 	{
 		ekold = ek;
