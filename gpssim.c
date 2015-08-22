@@ -358,7 +358,7 @@ void xyz2llh(const double *xyz, double *llh)
  *  \param[in] llh Input Array of Latitude, Longitude and Height
  *  \param[out] xyz Output Array of X, Y and Z ECEF coordinates
  */
-void llh2xyz(const const double *llh, double *xyz)
+void llh2xyz(const double *llh, double *xyz)
 {
 	double n;
 	double a;
