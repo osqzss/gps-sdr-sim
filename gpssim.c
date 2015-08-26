@@ -1185,6 +1185,7 @@ int readUserMotion(double xyz[USER_MOTION_SIZE][3], const char *filename)
 {
 	FILE *fp;
 	int numd;
+	char str[MAX_CHAR];
 	double t,x,y,z;
 
 	if (NULL==(fp=fopen(filename,"rt")))
@@ -1192,12 +1193,96 @@ int readUserMotion(double xyz[USER_MOTION_SIZE][3], const char *filename)
 
 	for (numd=0; numd<USER_MOTION_SIZE; numd++)
 	{
-		if (EOF==fscanf(fp, "%lf,%lf,%lf,%lf", &t, &x, &y, &z)) // Read CSV file
+		if (fgets(str, MAX_CHAR, fp)==NULL)
+			break;
+
+		if (EOF==sscanf(str, "%lf,%lf,%lf,%lf", &t, &x, &y, &z)) // Read CSV line
 			break;
 
 		xyz[numd][0] = x;
 		xyz[numd][1] = y;
 		xyz[numd][2] = z;
+	}
+
+	fclose(fp);
+
+	return (numd);
+}
+
+int readNmeaGGA(double xyz[USER_MOTION_SIZE][3], const char *filename)
+{
+	FILE *fp;
+	int numd = 0;
+	char str[MAX_CHAR];
+	char *token;
+	double llh[3],pos[3];
+	char tmp[8];
+
+	if (NULL==(fp=fopen(filename,"rt")))
+		return(-1);
+
+	while (1)
+	{
+		if (fgets(str, MAX_CHAR, fp)==NULL)
+			break;
+
+		token = strtok(str, ",");
+
+		if (strncmp(token+3, "GGA", 3)==0)
+		{
+			token = strtok(NULL, ","); // Date and time
+			
+			token = strtok(NULL, ","); // Latitude
+			strncpy(tmp, token, 2);
+			tmp[2] = 0;
+			
+			llh[0] = atof(tmp) + atof(token+2)/60.0;
+
+			token = strtok(NULL, ","); // North or south
+			if (token[0]=='S')
+				llh[0] *= -1.0;
+
+			llh[0] /= R2D; // in radian
+			
+			token = strtok(NULL, ","); // Longitude
+			strncpy(tmp, token, 3);
+			tmp[3] = 0;
+			
+			llh[1] = atof(tmp) + atof(token+3)/60.0;
+
+			token = strtok(NULL, ","); // East or west
+			if (token[0]=='W')
+				llh[1] *= -1.0;
+
+			llh[1] /= R2D; // in radian
+
+			token = strtok(NULL, ","); // GPS fix
+			token = strtok(NULL, ","); // Number of satellites
+			token = strtok(NULL, ","); // HDOP
+
+			token = strtok(NULL, ","); // Altitude above meas sea level
+			
+			llh[2] = atof(token);
+
+			token = strtok(NULL, ","); // in meter
+
+			token = strtok(NULL, ","); // Geoid height above WGS84 ellipsoid
+			
+			llh[2] += atof(token);
+
+			// Convert geodetic position into ECEF coordinates
+			llh2xyz(llh, pos);
+
+			xyz[numd][0] = pos[0];
+			xyz[numd][1] = pos[1];
+			xyz[numd][2] = pos[2];
+			
+			// Update the number of track points
+			numd++;
+
+			if (numd>=USER_MOTION_SIZE)
+				break;
+		}
 	}
 
 	fclose(fp);
@@ -1211,6 +1296,7 @@ void usage(void)
 		"Options:\n"
 		"  -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)\n"
 		"  -u <user_motion> User motion file (dynamic mode)\n"
+		"  -g <nmea_gga>    NMEA GGA stream (dynamic mode)\n"
 		"  -l <location>    Lat,Lon,Hgt (static mode) e.g. 30.286502,120.032669,100\n"
 		"  -o <output>      I/Q sampling data file (default: gpssim.bin)\n"
 		"  -s <frequency>   Sampling frequency [Hz] (default: 2600000)\n"
@@ -1266,8 +1352,10 @@ int main(int argc, char *argv[])
 	int iumd;
 	int numd;
 	char umfile[MAX_CHAR];
-	bool staticLocationMode = false;
 	double xyz[USER_MOTION_SIZE][3];
+
+	bool staticLocationMode = false;
+	bool nmeaGGA = false;
 
 	char navfile[MAX_CHAR];
 	char outfile[MAX_CHAR];
@@ -1295,7 +1383,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:l:o:s:b:"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:g:l:o:s:b:"))!=-1)
 	{
 		switch (result)
 		{
@@ -1304,6 +1392,11 @@ int main(int argc, char *argv[])
 			break;
 		case 'u':
 			strcpy(umfile, optarg);
+			nmeaGGA = false;
+			break;
+		case 'g':
+			strcpy(umfile, optarg);
+			nmeaGGA = true;
 			break;
 		case 'l':
 			// Static geodetic coordinates input mode
@@ -1349,8 +1442,8 @@ int main(int argc, char *argv[])
 
 	if (umfile[0]==0 && !staticLocationMode)
 	{
-		printf("User motion file is not specified.\n");
-		printf("Or you may use -l to specify llh coordinate directly.\n");
+		printf("User motion file / NMEA GGA stream is not specified.\n");
+		printf("You may use -l to specify the static location directly.\n");
 		exit(1);
 	}
 
@@ -1368,19 +1461,23 @@ int main(int argc, char *argv[])
 	if (!staticLocationMode)
 	{
 		// Read user motion file
-		numd = readUserMotion(xyz, umfile);
+		if (nmeaGGA==true)
+			numd = readNmeaGGA(xyz, umfile);
+		else
+			numd = readUserMotion(xyz, umfile);
+
 		if (numd==-1)
 		{
-			printf("Failed to open user motion file.\n");
+			printf("Failed to open user motion / NMEA GGA file.\n");
 			exit(1);
 		}
 		else if (numd==0)
 		{
-			printf("Failed to read user motion data.\n");
+			printf("Failed to read user motion / NMEA GGA data.\n");
 			exit(1);
 		}
 
-		printf("User motion data = %d\n", numd);
+		printf("Track points = %d\n", numd);
 
 		// Initial location in Geodetic coordinate system
 		xyz2llh(xyz[0], llh);
