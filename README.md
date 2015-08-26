@@ -49,6 +49,7 @@ Usage: gps-sdr-sim [options]
 Options:
   -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)
   -u <user_motion> User motion file (dynamic mode)
+  -g <nmea_gga>    NMEA GGA stream (dynamic mode)
   -l <location>    Lat,Lon,Hgt (static mode) e.g. 30.286502,120.032669,100
   -o <output>      I/Q sampling data file (default: gpssim.bin)
   -s <frequency>   Sampling frequency [Hz] (default: 2600000)
@@ -59,6 +60,10 @@ The user motion can be specified in either dynamic or static mode:
 
 ```
 > gps-sdr-sim -e brdc3540.14n -u circle.csv -b 16
+```
+
+```
+> gps-sdr-sim -e brdc3540.14n -g triumphv3.txt -b 16
 ```
 
 ```
