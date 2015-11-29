@@ -224,7 +224,8 @@ typedef struct
 	int ca[CA_SEQ_LEN]; /*< C/A Sequence */
 	double f_carr;	/*< Carrier frequency */
 	double f_code;	/*< Code frequency */
-	double carr_phase; /*< Carrier phase */
+	unsigned int carr_phase; /*< Carrier phase */
+    int carr_phasestep;	/*< Carrier phasestep */
 	double code_phase; /*< Code phase */
 	gpstime_t g0;	/*!< GPS time at start */
 	unsigned long dwrd[N_DWRD]; /*!< Data words of sub-frame */
@@ -233,7 +234,6 @@ typedef struct
 	int icode;	/*!< initial code */
 	int dataBit;	/*!< current data bit */
 	int codeCA;	/*!< current C/A code */
-	short *iq_buff;	/*< buffer of I/Q samples */
 } channel_t;
 
 /* !\brief generate the C/A code sequence for a given Satellite Vehicle PRN
@@ -1341,7 +1341,8 @@ int main(int argc, char *argv[])
 #else
 	double ip,qp;
 #endif
-	void *iq_buff = NULL;
+	short *iq_buff = NULL;
+	signed char *iq8_buff = NULL;
 
 	gpstime_t grx;
 	range_t rho0[MAX_SAT];
@@ -1569,16 +1570,22 @@ int main(int argc, char *argv[])
 	////////////////////////////////////////////////////////////
 
 	// Allocate I/Q buffer
-	if (data_format==SC08)
-		iq_buff = (signed char *)calloc(2*iq_buff_size, 1);
-	else
-		iq_buff = (short *)calloc(2*iq_buff_size, 2);
-
+    iq_buff = calloc(2*iq_buff_size, 2);
 	if (iq_buff==NULL)
 	{
 		printf("Faild to allocate IQ buffer.\n");
 		exit(1);
 	}
+
+    if (data_format==SC08)
+    {
+        iq8_buff = calloc(2*iq_buff_size, 1);
+        if (iq8_buff==NULL)
+        {
+            printf("Faild to allocate IQ buffer.\n");
+            exit(1);
+        }
+    }
 
 	// Open output file
 	if (NULL==(fp=fopen(outfile,"wb")))
@@ -1598,15 +1605,6 @@ int main(int argc, char *argv[])
 	{
 		// C/A code generation
 		codegen(chan[i].ca, chan[i].prn);
-
-		// Allocate I/Q buffer
-		chan[i].iq_buff = (short *)calloc(2*iq_buff_size, 2);
-
-		if (chan[i].iq_buff==NULL)
-		{
-			printf("Faild to allocate IQ buffer.\n");
-			exit(1);
-		}
 	}
 
 	// Initialize carrier phase
@@ -1626,8 +1624,8 @@ int main(int argc, char *argv[])
 		r_xyz = tmp.range;
 
 		phase_ini = (2.0*r_ref - r_xyz)/LAMBDA_L1;
-
-		chan[i].carr_phase = phase_ini - floor(phase_ini);
+        phase_ini -= floor(phase_ini);
+		chan[i].carr_phase = 512 * 65536.0 * phase_ini;
 	}
 
 	////////////////////////////////////////////////////////////
@@ -1710,21 +1708,27 @@ int main(int argc, char *argv[])
 
 			// Update code phase and data bit counters
 			computeCodePhase(&chan[i], rho0[sv], rho, 0.1);
-			
+			chan[i].carr_phasestep = 512 * 65536.0 * chan[i].f_carr * delt;
+
 			// Save current pseudorange
 			rho0[sv] = rho;
+        }
 
-			for (isamp=0; isamp<iq_buff_size; isamp++)
-			{
+        for (isamp=0; isamp<iq_buff_size; isamp++)
+        {
+            int i_acc = 0;
+            int q_acc = 0;
+
+            for (i=0; i<nsat; i++)
+            {
 #ifdef _SINE_LUT
-				iTable = (int)floor(chan[i].carr_phase*512.0);
+                iTable = (chan[i].carr_phase >> 16) & 511;
 
 				ip = chan[i].dataBit * chan[i].codeCA * cosTable512[iTable];
 				qp = chan[i].dataBit * chan[i].codeCA * sinTable512[iTable];
 
-				// Store I/Q samples into buffer
-				chan[i].iq_buff[isamp*2]   = (short)ip;
-				chan[i].iq_buff[isamp*2+1] = (short)qp;
+                i_acc += ip;
+                q_acc += qp;
 #else
 				ip = chan[i].dataBit * chan[i].codeCA * cos(2.0*PI*chan[i].carr_phase);
 				qp = chan[i].dataBit * chan[i].codeCA * sin(2.0*PI*chan[i].carr_phase);
@@ -1762,35 +1766,25 @@ int main(int argc, char *argv[])
 				chan[i].codeCA = chan[i].ca[(int)chan[i].code_phase]*2-1;
 
 				// Update carrier phase
-				chan[i].carr_phase += chan[i].f_carr * delt;
-
-				if (chan[i].carr_phase>=1.0)
-					chan[i].carr_phase -= 1.0;
-				else if (chan[i].carr_phase<0.0)
-					chan[i].carr_phase += 1.0;
+				chan[i].carr_phase += chan[i].carr_phasestep;
 			}
+
+            // Store I/Q samples into buffer
+            iq_buff[isamp*2]   = (short)i_acc;
+            iq_buff[isamp*2+1] = (short)q_acc;
+            
 		} // End of omp parallel for
 
 		if (data_format==SC08)
 		{
 			for (isamp=0; isamp<2*iq_buff_size; isamp++)
 			{
-				signed char sample = 0;
-				for (i=0; i<nsat; i++)
-					sample += (signed char)(chan[i].iq_buff[isamp]>>4); // 12-bit bladeRF -> 8-bit HackRF
-				((signed char*)iq_buff)[isamp] = sample;
+                iq8_buff[isamp] = iq_buff[isamp]>>4; // 12-bit bladeRF -> 8-bit HackRF
 			}
-			fwrite(iq_buff, 1, 2*iq_buff_size, fp);
+			fwrite(iq8_buff, 1, 2*iq_buff_size, fp);
 		} 
 		else 
 		{
-			for (isamp=0; isamp<2*iq_buff_size; isamp++)
-			{
-				short sample = 0;
-				for (i=0; i<nsat; i++)
-					sample += chan[i].iq_buff[isamp];
-				((short*)iq_buff)[isamp] = sample;
-			}
 			fwrite(iq_buff, 2, 2*iq_buff_size, fp);
 		}
 
@@ -1808,8 +1802,6 @@ int main(int argc, char *argv[])
 
 	// Free I/Q buffer
 	free(iq_buff);
-	for (i=0; i<nsat; i++)
-		free(chan[i].iq_buff);
 
 	// Close file
 	fclose(fp);
