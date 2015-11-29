@@ -10,15 +10,12 @@ to RF using software-defined radio (SDR) platforms, such as
 2. Create an empty project for a console application.
 3. On the Solution Explorer at right, add "gpssim.c" and "getopt.c" to the Souce Files folder.
 4. Select "Release" in Solution Configurations drop-down list.
-5. Open the Property Pages dialog box and expand the Configuration Properties.
-6. Expand the C/C++ node and select the Language property page.
-7. Enable the OpenMP Support (/openmp).
-8. Build the solution.
+5. Build the solution.
 
 ### Building with GCC
 
 ```
-$ gcc gpssim.c -lm -fopenmp -o gps-sdr-sim
+$ gcc gpssim.c -lm -O3 -o gps-sdr-sim
 ```
 
 ### Generating the GPS signal file
