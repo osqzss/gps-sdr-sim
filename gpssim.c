@@ -225,7 +225,7 @@ typedef struct
 	double f_carr;	/*< Carrier frequency */
 	double f_code;	/*< Code frequency */
 	unsigned int carr_phase; /*< Carrier phase */
-    int carr_phasestep;	/*< Carrier phasestep */
+	int carr_phasestep;	/*< Carrier phasestep */
 	double code_phase; /*< Code phase */
 	gpstime_t g0;	/*!< GPS time at start */
 	unsigned long dwrd[N_DWRD]; /*!< Data words of sub-frame */
@@ -1570,22 +1570,22 @@ int main(int argc, char *argv[])
 	////////////////////////////////////////////////////////////
 
 	// Allocate I/Q buffer
-    iq_buff = calloc(2*iq_buff_size, 2);
+	iq_buff = calloc(2*iq_buff_size, 2);
 	if (iq_buff==NULL)
 	{
 		printf("Faild to allocate IQ buffer.\n");
 		exit(1);
 	}
 
-    if (data_format==SC08)
-    {
-        iq8_buff = calloc(2*iq_buff_size, 1);
-        if (iq8_buff==NULL)
-        {
-            printf("Faild to allocate IQ buffer.\n");
-            exit(1);
-        }
-    }
+	if (data_format==SC08)
+	{
+		iq8_buff = calloc(2*iq_buff_size, 1);
+		if (iq8_buff==NULL)
+		{
+			printf("Faild to allocate IQ buffer.\n");
+			exit(1);
+		}
+	}
 
 	// Open output file
 	if (NULL==(fp=fopen(outfile,"wb")))
@@ -1624,8 +1624,8 @@ int main(int argc, char *argv[])
 		r_xyz = tmp.range;
 
 		phase_ini = (2.0*r_ref - r_xyz)/LAMBDA_L1;
-        phase_ini -= floor(phase_ini);
-		chan[i].carr_phase = 512 * 65536.0 * phase_ini;
+		phase_ini -= floor(phase_ini);
+		chan[i].carr_phase = (unsigned int)(512 * 65536.0 * phase_ini);
 	}
 
 	////////////////////////////////////////////////////////////
@@ -1695,8 +1695,6 @@ int main(int argc, char *argv[])
 	
 	for (iumd=1; iumd<numd; iumd++)
 	{
-		//#pragma omp parallel for private(isamp) // !!!FIXME!!! The current code runs faster without OpenMP support
-		// Properties -> Configuration Properties -> C/C++ -> Language -> Open MP Support -> Yes (/openmp)
 		for (i=0; i<nsat; i++)
 		{
 			// Refresh code phase and data bit counters
@@ -1708,27 +1706,27 @@ int main(int argc, char *argv[])
 
 			// Update code phase and data bit counters
 			computeCodePhase(&chan[i], rho0[sv], rho, 0.1);
-			chan[i].carr_phasestep = 512 * 65536.0 * chan[i].f_carr * delt;
+			chan[i].carr_phasestep = (int)(512 * 65536.0 * chan[i].f_carr * delt);
 
 			// Save current pseudorange
 			rho0[sv] = rho;
-        }
+		}
 
-        for (isamp=0; isamp<iq_buff_size; isamp++)
-        {
-            int i_acc = 0;
-            int q_acc = 0;
+		for (isamp=0; isamp<iq_buff_size; isamp++)
+		{
+			int i_acc = 0;
+			int q_acc = 0;
 
-            for (i=0; i<nsat; i++)
-            {
+			for (i=0; i<nsat; i++)
+			{
 #ifdef _SINE_LUT
-                iTable = (chan[i].carr_phase >> 16) & 511;
+				iTable = (chan[i].carr_phase >> 16) & 511;
 
 				ip = chan[i].dataBit * chan[i].codeCA * cosTable512[iTable];
 				qp = chan[i].dataBit * chan[i].codeCA * sinTable512[iTable];
 
-                i_acc += ip;
-                q_acc += qp;
+				i_acc += ip;
+				q_acc += qp;
 #else
 				ip = chan[i].dataBit * chan[i].codeCA * cos(2.0*PI*chan[i].carr_phase);
 				qp = chan[i].dataBit * chan[i].codeCA * sin(2.0*PI*chan[i].carr_phase);
@@ -1769,17 +1767,17 @@ int main(int argc, char *argv[])
 				chan[i].carr_phase += chan[i].carr_phasestep;
 			}
 
-            // Store I/Q samples into buffer
-            iq_buff[isamp*2]   = (short)i_acc;
-            iq_buff[isamp*2+1] = (short)q_acc;
-            
+			// Store I/Q samples into buffer
+			iq_buff[isamp*2]   = (short)i_acc;
+			iq_buff[isamp*2+1] = (short)q_acc;
+
 		} // End of omp parallel for
 
 		if (data_format==SC08)
 		{
 			for (isamp=0; isamp<2*iq_buff_size; isamp++)
 			{
-                iq8_buff[isamp] = iq_buff[isamp]>>4; // 12-bit bladeRF -> 8-bit HackRF
+				iq8_buff[isamp] = iq_buff[isamp]>>4; // 12-bit bladeRF -> 8-bit HackRF
 			}
 			fwrite(iq8_buff, 1, 2*iq_buff_size, fp);
 		} 
