@@ -78,10 +78,6 @@ typedef int bool;
 #define SC08 (8)
 #define SC16 (16)
 
-#define ADC_GAIN (250) // for bladeRF txvga1 = -25dB with 50dB external attenuation
-
-#define _SINE_LUT
-#ifdef _SINE_LUT
 int sinTable512[] = {
 	   2,   5,   8,  11,  14,  17,  20,  23,  26,  29,  32,  35,  38,  41,  44,  47,
 	  50,  53,  56,  59,  62,  65,  68,  71,  74,  77,  80,  83,  86,  89,  91,  94,
@@ -151,7 +147,6 @@ int cosTable512[] = {
 	 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 241, 242, 243, 244, 244, 245,
 	 245, 246, 247, 247, 248, 248, 248, 249, 249, 249, 249, 250, 250, 250, 250, 250
 };
-#endif
 
 /*! \file gpssim.c
  *  \brief GPS Satellite Simulator
@@ -215,6 +210,7 @@ typedef struct
 	gpstime_t g;
 	double range;
 	double rate;
+	double d;
 } range_t;
 
 /*! \brief Structure representing a Channel */
@@ -1121,6 +1117,7 @@ void computeRange(range_t *rho, ephem_t eph, gpstime_t g, double xyz[])
 	// New observer to satellite vector and satellite range.
 	subVect(los, pos, xyz);
 	range = normVect(los);
+	rho->d = range;
 
 	// Pseudorange.
 	rho->range = range - SPEED_OF_LIGHT*clk[0];
@@ -1335,12 +1332,8 @@ int main(int argc, char *argv[])
 	unsigned long prevwrd;
 	int nib;
 
-#ifdef _SINE_LUT
 	int ip,qp;
 	int iTable;
-#else
-	double ip,qp;
-#endif
 	short *iq_buff = NULL;
 	signed char *iq8_buff = NULL;
 
@@ -1366,6 +1359,8 @@ int main(int argc, char *argv[])
 	int data_format;
 
 	int result;
+
+	int gain[MAX_CHAN];
 
 	////////////////////////////////////////////////////////////
 	// Read options
@@ -1558,7 +1553,7 @@ int main(int argc, char *argv[])
 				chan[nsat].prn = sv+1;
 				nsat++;
 
-				printf("%02d %6.1f %5.1f\n", sv+1, azel[0]*R2D, azel[1]*R2D);
+				printf("%02d %6.1f %5.1f %10.1f\n", sv+1, azel[0]*R2D, azel[1]*R2D, normVect(los));
 			}
 		}
 	}
@@ -1571,6 +1566,7 @@ int main(int argc, char *argv[])
 
 	// Allocate I/Q buffer
 	iq_buff = calloc(2*iq_buff_size, 2);
+
 	if (iq_buff==NULL)
 	{
 		printf("Faild to allocate IQ buffer.\n");
@@ -1710,6 +1706,11 @@ int main(int argc, char *argv[])
 
 			// Save current pseudorange
 			rho0[sv] = rho;
+
+			// Path loss
+			gain[i] = (int)(20200000.0*100.0/rho.d); // scaled by 100
+
+			// Receiver antenna gain
 		}
 
 		for (isamp=0; isamp<iq_buff_size; isamp++)
@@ -1719,22 +1720,14 @@ int main(int argc, char *argv[])
 
 			for (i=0; i<nsat; i++)
 			{
-#ifdef _SINE_LUT
 				iTable = (chan[i].carr_phase >> 16) & 511;
 
-				ip = chan[i].dataBit * chan[i].codeCA * cosTable512[iTable];
-				qp = chan[i].dataBit * chan[i].codeCA * sinTable512[iTable];
+				ip = chan[i].dataBit * chan[i].codeCA * cosTable512[iTable] * gain[i];
+				qp = chan[i].dataBit * chan[i].codeCA * sinTable512[iTable] * gain[i];
 
-				i_acc += ip;
-				q_acc += qp;
-#else
-				ip = chan[i].dataBit * chan[i].codeCA * cos(2.0*PI*chan[i].carr_phase);
-				qp = chan[i].dataBit * chan[i].codeCA * sin(2.0*PI*chan[i].carr_phase);
+				i_acc += ip/100;
+				q_acc += qp/100;
 
-				// Store I/Q samples into buffer
-				chan[i].iq_buff[isamp*2]   = (short)(ADC_GAIN*ip);
-				chan[i].iq_buff[isamp*2+1] = (short)(ADC_GAIN*qp);
-#endif
 				// Update code phase
 				chan[i].code_phase += chan[i].f_code * delt;
 
@@ -1768,7 +1761,7 @@ int main(int argc, char *argv[])
 			}
 
 			// Store I/Q samples into buffer
-			iq_buff[isamp*2]   = (short)i_acc;
+			iq_buff[isamp*2] = (short)i_acc;
 			iq_buff[isamp*2+1] = (short)q_acc;
 
 		} // End of omp parallel for
@@ -1776,15 +1769,12 @@ int main(int argc, char *argv[])
 		if (data_format==SC08)
 		{
 			for (isamp=0; isamp<2*iq_buff_size; isamp++)
-			{
 				iq8_buff[isamp] = iq_buff[isamp]>>4; // 12-bit bladeRF -> 8-bit HackRF
-			}
+
 			fwrite(iq8_buff, 1, 2*iq_buff_size, fp);
 		} 
 		else 
-		{
 			fwrite(iq_buff, 2, 2*iq_buff_size, fp);
-		}
 
 		// Update receiver time
 		grx.sec += 0.1;
