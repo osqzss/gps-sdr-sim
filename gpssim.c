@@ -148,6 +148,13 @@ int cosTable512[] = {
 	 245, 246, 247, 247, 248, 248, 248, 249, 249, 249, 249, 250, 250, 250, 250, 250
 };
 
+double ant_pat_db[37] = {
+	 0.00,  0.00,  0.22,  0.44,  0.67,  1.11,  1.56,  2.00,  2.44,  2.89,  3.56,  4.22,
+	 4.89,  5.56,  6.22,  6.89,  7.56,  8.22,  8.89,  9.78, 10.67, 11.56, 12.44, 13.33,
+	14.44, 15.56, 16.67, 17.78, 18.89, 20.00, 21.33, 22.67, 24.00, 25.56, 27.33, 29.33,
+	31.56
+}; // Receiver antenna attenuation for boresight angle = 0:5:180 [deg]
+
 /*! \file gpssim.c
  *  \brief GPS Satellite Simulator
  */
@@ -211,6 +218,7 @@ typedef struct
 	double range;
 	double rate;
 	double d;
+	double azel[2];
 } range_t;
 
 /*! \brief Structure representing a Channel */
@@ -231,6 +239,39 @@ typedef struct
 	int dataBit;	/*!< current data bit */
 	int codeCA;	/*!< current C/A code */
 } channel_t;
+
+/*! \brief Subtract two vectors of double
+ *  \param[out] y Result of subtraction
+ *  \param[in] x1 Minuend of subtracion
+ *  \param[in] x2 Subtrahend of subtracion
+ */
+void subVect(double *y, const double *x1, const double *x2)
+{
+	y[0] = x1[0]-x2[0];
+	y[1] = x1[1]-x2[1];
+	y[2] = x1[2]-x2[2];
+
+	return;
+}
+
+/*! \brief Compute Norm of Vector
+ *  \param[in] x Input vector
+ *  \returns Length (Norm) of the input vector
+ */
+double normVect(const double *x)
+{
+	return(sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]));
+}
+
+/*! \brief Compute dot-product of two vectors
+ *  \param[in] x1 First multiplicand
+ *  \param[in] x2 Second multiplicand
+ *  \returns Dot-product of both multiplicands
+ */
+double dotProd(const double *x1, const double *x2)
+{
+	return(x1[0]*x2[0]+x1[1]*x2[1]+x1[2]*x2[2]);
+}
 
 /* !\brief generate the C/A code sequence for a given Satellite Vehicle PRN
  *  \param[in] prn PRN nuber of the Satellite Vehicle
@@ -321,6 +362,16 @@ void xyz2llh(const double *xyz, double *llh)
 
 	eps = 1.0e-3;
 	e2 = e*e;
+
+	if (normVect(xyz)<eps)
+	{
+		// Invalid ECEF vector
+		llh[0] = 0.0;
+		llh[1] = 0.0;
+		llh[2] = -a;
+
+		return;
+	}
 
 	x = xyz[0];
 	y = xyz[1];
@@ -1049,39 +1100,6 @@ int readRinexNav(ephem_t eph[], const char *fname)
 	return(nsat);
 }
 
-/*! \brief Subtract two vectors of double
- *  \param[out] y Result of subtraction
- *  \param[in] x1 Minuend of subtracion
- *  \param[in] x2 Subtrahend of subtracion
- */
-void subVect(double *y, const double *x1, const double *x2)
-{
-	y[0] = x1[0]-x2[0];
-	y[1] = x1[1]-x2[1];
-	y[2] = x1[2]-x2[2];
-
-	return;
-}
-
-/*! \brief Compute Norm of Vector
- *  \param[in] x Input vector
- *  \returns Length (Norm) of the input vector
- */
-double normVect(const double *x)
-{
-	return(sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]));
-}
-
-/*! \brief Compute dot-product of two vectors
- *  \param[in] x1 First multiplicand
- *  \param[in] x2 Second multiplicand
- *  \returns Dot-product of both multiplicands
- */
-double dotProd(const double *x1, const double *x2)
-{
-	return(x1[0]*x2[0]+x1[1]*x2[1]+x1[2]*x2[2]);
-}
-
 /*! \brief Compute range between a satellite and the receiver
  *  \param[out] rho The computed range
  *  \param[in] eph Ephemeris data of the satellite
@@ -1095,6 +1113,10 @@ void computeRange(range_t *rho, ephem_t eph, gpstime_t g, double xyz[])
 	double tau;
 	double range,rate;
 	double xrot,yrot;
+
+	double llh[3],neu[3];
+	double tmat[3][3];
+
 	
 	// SV position at time of the pseudorange observation.
 	satpos(eph, g, pos, vel, clk);
@@ -1128,8 +1150,14 @@ void computeRange(range_t *rho, ephem_t eph, gpstime_t g, double xyz[])
 	// Pseudorange rate.
 	rho->rate = rate; // - SPEED_OF_LIGHT*clk[1];
 
-	// Time of application
+	// Time of application.
 	rho->g = g;
+
+	// Azimuth and elevation angles.
+	xyz2llh(xyz, llh);
+	ltcmat(llh, tmat);
+	ecef2neu(los, tmat, neu);
+	neu2azel(rho->azel, neu);
 
 	return;
 }
@@ -1361,6 +1389,10 @@ int main(int argc, char *argv[])
 	int result;
 
 	int gain[MAX_CHAN];
+	double path_loss;
+	double ant_gain;
+	double ant_pat[37];
+	int ibs; // boresight angle index
 
 	////////////////////////////////////////////////////////////
 	// Read options
@@ -1665,6 +1697,13 @@ int main(int argc, char *argv[])
 	}
 
 	////////////////////////////////////////////////////////////
+	// Receiver antenna pattern
+	////////////////////////////////////////////////////////////
+
+	for (i=0; i<37; i++)
+		ant_pat[i] = pow(10.0, -ant_pat_db[i]/20.0);
+
+	////////////////////////////////////////////////////////////
 	// Generate baseband signals
 	////////////////////////////////////////////////////////////
 
@@ -1708,9 +1747,14 @@ int main(int argc, char *argv[])
 			rho0[sv] = rho;
 
 			// Path loss
-			gain[i] = (int)(20200000.0*100.0/rho.d); // scaled by 100
+			path_loss = 20200000.0/rho.d;
 
 			// Receiver antenna gain
+			ibs = (int)((90.0-rho.azel[1]*R2D)/5.0); // covert elevation to boresight
+			ant_gain = ant_pat[ibs];
+
+			// Signal gain
+			gain[i] = (int)(path_loss*ant_gain*100.0); // scaled by 100
 		}
 
 		for (isamp=0; isamp<iq_buff_size; isamp++)
@@ -1725,8 +1769,8 @@ int main(int argc, char *argv[])
 				ip = chan[i].dataBit * chan[i].codeCA * cosTable512[iTable] * gain[i];
 				qp = chan[i].dataBit * chan[i].codeCA * sinTable512[iTable] * gain[i];
 
-				i_acc += ip/100;
-				q_acc += qp/100;
+				i_acc += (ip + 50)/100;
+				q_acc += (qp + 50)/100;
 
 				// Update code phase
 				chan[i].code_phase += chan[i].f_code * delt;
