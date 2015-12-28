@@ -47,7 +47,7 @@ is available. Otherwise the first time of ephemeris in the RINEX navigation file
 is selected.
 
 The maximum simulation duration time is defined by USER_MOTION_SIZE to 
-the prevent output file from getting too large.
+prevent the output file from getting too large.
 
 ```
 Usage: gps-sdr-sim [options]
