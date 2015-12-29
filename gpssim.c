@@ -76,6 +76,7 @@ typedef int bool;
 #define CARR_TO_CODE (1.0/1540.0)
 
 // Sampling data format
+#define SC01 (1)
 #define SC08 (8)
 #define SC16 (16)
 
@@ -1536,8 +1537,8 @@ void usage(void)
 		"  -d <duration>    Duration [sec] (max: %.0f)\n"
 		"  -o <output>      I/Q sampling data file (default: gpssim.bin)\n"
 		"  -s <frequency>   Sampling frequency [Hz] (default: 2600000)\n"
-		"  -b <iq_bits>     I/Q data format [8/16] (default: 16)\n"
-		"  -v <verbose>     Show details about simulated channels\n",
+		"  -b <iq_bits>     I/Q data format [1/8/16] (default: 16)\n"
+		"  -v               Show details about simulated channels\n",
 		((double)USER_MOTION_SIZE)/10.0);
 
 	return;
@@ -1658,7 +1659,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'b':
 			data_format = atoi(optarg);
-			if (data_format!=SC08 && data_format!=SC16)
+			if (data_format!=SC01 && data_format!=SC08 && data_format!=SC16)
 			{
 				printf("ERROR: Invalid I/Q data format.\n");
 				exit(1);
@@ -1856,7 +1857,7 @@ int main(int argc, char *argv[])
 
 	if (iq_buff==NULL)
 	{
-		printf("ERROR: Faild to allocate IQ buffer.\n");
+		printf("ERROR: Faild to allocate 16-bit I/Q buffer.\n");
 		exit(1);
 	}
 
@@ -1865,7 +1866,16 @@ int main(int argc, char *argv[])
 		iq8_buff = calloc(2*iq_buff_size, 1);
 		if (iq8_buff==NULL)
 		{
-			printf("ERROR: Faild to allocate IQ buffer.\n");
+			printf("ERROR: Faild to allocate 8-bit I/Q buffer.\n");
+			exit(1);
+		}
+	}
+	else if (data_format==SC01)
+	{
+		iq8_buff = calloc(iq_buff_size/4, 1); // byte = {I0, Q0, I1, Q1, I2, Q2, I3, Q3}
+		if (iq8_buff==NULL)
+		{
+			printf("ERROR: Faild to allocate compressed 1-bit I/Q buffer.\n");
 			exit(1);
 		}
 	}
@@ -2009,15 +2019,32 @@ int main(int argc, char *argv[])
 
 		} // End of omp parallel for
 
-		if (data_format==SC08)
+		if (data_format==SC01)
+		{
+			for (isamp=0; isamp<2*iq_buff_size; isamp++)
+			{
+				if (isamp%8==0)
+					iq8_buff[isamp/8] = 0x00;
+
+				iq8_buff[isamp/8] |= (iq_buff[isamp]>0?0x01:0x00)<<(7-isamp%8);
+			}
+
+			fwrite(iq8_buff, 1, iq_buff_size/4, fp);
+		}
+		else if (data_format==SC08)
 		{
 			for (isamp=0; isamp<2*iq_buff_size; isamp++)
 				iq8_buff[isamp] = iq_buff[isamp]>>4; // 12-bit bladeRF -> 8-bit HackRF
 
 			fwrite(iq8_buff, 1, 2*iq_buff_size, fp);
 		} 
-		else 
+		else // data_format==SC16
+		{
+			for (isamp=0; isamp<2*iq_buff_size; isamp++)
+				iq_buff[isamp] = iq_buff[isamp]>0?1000:-1000; // Emulated 1-bit I/Q
+
 			fwrite(iq_buff, 2, 2*iq_buff_size, fp);
+		}
 
 		//
 		// Update navigation message and channel allocation every 30 seconds
