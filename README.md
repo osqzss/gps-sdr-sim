@@ -60,8 +60,8 @@ Options:
   -d <duration>    Duration [sec] (max: 300)
   -o <output>      I/Q sampling data file (default: gpssim.bin)
   -s <frequency>   Sampling frequency [Hz] (default: 2600000)
-  -b <iq_bits>     I/Q data format [8/16] (default: 16)
-  -v <verbose>     Show details about simulated channels
+  -b <iq_bits>     I/Q data format [1/8/16] (default: 16)
+  -v               Show details about simulated channels
 ```
 
 The user motion can be specified in either dynamic or static mode:
