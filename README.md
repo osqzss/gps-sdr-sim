@@ -49,6 +49,9 @@ is selected.
 The maximum simulation duration time is defined by USER_MOTION_SIZE to 
 prevent the output file from getting too large.
 
+The output file size can be reduced by using "-b 1" option to store 
+four 1-bit I/Q samples into a single byte. 
+
 ```
 Usage: gps-sdr-sim [options]
 Options:
