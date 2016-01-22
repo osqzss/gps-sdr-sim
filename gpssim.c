@@ -1558,7 +1558,6 @@ int main(int argc, char *argv[])
 	double llh[3];
 	
 	int i;
-	int nsat;
 	channel_t chan[MAX_CHAN];
 	double elvmask = 0.0; // in degree
 
@@ -1903,7 +1902,7 @@ int main(int argc, char *argv[])
 	grx = g0;
 
 	// Allocate visible satellites
-	nsat = allocateChannel(chan, eph[ieph], grx, xyz[0], elvmask);
+	allocateChannel(chan, eph[ieph], grx, xyz[0], elvmask);
 
 	for(i=0; i<MAX_CHAN; i++)
 	{
@@ -2060,7 +2059,7 @@ int main(int argc, char *argv[])
 					generateNavMsg(grx, &chan[i], 0);
 
 			// Update channel allocation
-			nsat = allocateChannel(chan, eph[ieph], grx, xyz[iumd], elvmask);
+			allocateChannel(chan, eph[ieph], grx, xyz[iumd], elvmask);
 
 			// Show ditails about simulated channels
 			if (verb)
