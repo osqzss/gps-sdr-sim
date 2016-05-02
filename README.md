@@ -51,6 +51,8 @@ prevent the output file from getting too large.
 
 The output file size can be reduced by using "-b 1" option to store 
 four 1-bit I/Q samples into a single byte. 
+You can use [bladeplayer](https://github.com/osqzss/gps-sdr-sim/tree/master/player)
+for bladeRF to playback the compressed file.
 
 ```
 Usage: gps-sdr-sim [options]
