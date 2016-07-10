@@ -10,15 +10,12 @@ to RF using software-defined radio (SDR) platforms, such as
 2. Create an empty project for a console application.
 3. On the Solution Explorer at right, add "gpssim.c" and "getopt.c" to the Souce Files folder.
 4. Select "Release" in Solution Configurations drop-down list.
-5. Open the Property Pages dialog box and expand the Configuration Properties.
-6. Expand the C/C++ node and select the Language property page.
-7. Enable the OpenMP Support (/openmp).
-8. Build the solution.
+5. Build the solution.
 
 ### Building with GCC
 
 ```
-$ gcc gpssim.c -lm -fopenmp -o gps-sdr-sim
+$ gcc gpssim.c -lm -O3 -o gps-sdr-sim
 ```
 
 ### Generating the GPS signal file
@@ -40,10 +37,22 @@ then used to generate the digitized I/Q samples for the GPS signal.
 
 The bladeRF command line interface requires I/Q pairs stored as signed 
 16-bit integers, while the hackrf_transfer and gps-sdr-sim-uhd.py
-supports signed bytes.
+support signed bytes.
 
 HackRF and bladeRF require 2.6 MHz sample rate, while the USRP2 requires
 2.5 MHz (an even integral decimator of 100 MHz).
+
+The simulation start time can be specified if the corresponding set of ephemerides
+is available. Otherwise the first time of ephemeris in the RINEX navigation file
+is selected.
+
+The maximum simulation duration time is defined by USER_MOTION_SIZE to 
+prevent the output file from getting too large.
+
+The output file size can be reduced by using "-b 1" option to store 
+four 1-bit I/Q samples into a single byte. 
+You can use [bladeplayer](https://github.com/osqzss/gps-sdr-sim/tree/master/player)
+for bladeRF to playback the compressed file.
 
 ```
 Usage: gps-sdr-sim [options]
@@ -52,23 +61,26 @@ Options:
   -u <user_motion> User motion file (dynamic mode)
   -g <nmea_gga>    NMEA GGA stream (dynamic mode)
   -l <location>    Lat,Lon,Hgt (static mode) e.g. 30.286502,120.032669,100
+  -t <date,time>   Scenario start time YYYY/MM/DD,hh:mm:ss
+  -d <duration>    Duration [sec] (max: 300)
   -o <output>      I/Q sampling data file (default: gpssim.bin)
   -s <frequency>   Sampling frequency [Hz] (default: 2600000)
-  -b <iq_bits>     I/Q data format [8/16] (default: 8)
+  -b <iq_bits>     I/Q data format [1/8/16] (default: 16)
+  -v               Show details about simulated channels
 ```
 
 The user motion can be specified in either dynamic or static mode:
 
 ```
-> gps-sdr-sim -e brdc3540.14n -u circle.csv -b 16
+> gps-sdr-sim -e brdc3540.14n -u circle.csv
 ```
 
 ```
-> gps-sdr-sim -e brdc3540.14n -g triumphv3.txt -b 16
+> gps-sdr-sim -e brdc3540.14n -g triumphv3.txt
 ```
 
 ```
-> gps-sdr-sim -e brdc3540.14n -l 30.286502,120.032669,100 -b 16
+> gps-sdr-sim -e brdc3540.14n -l 30.286502,120.032669,100
 ```
 
 ### Transmitting the samples
