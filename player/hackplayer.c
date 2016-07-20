@@ -63,7 +63,7 @@ int tx_callback(hackrf_transfer* transfer) {
 
 static void usage() {
 	fprintf(stderr, "Usage: hackplayer [options]\n"
-		"  -t <tx_file>  I/Q sampling data file (required)\n");
+		"  -t <filename>  Transmit data from file (required)\n");
 
 	return;
 }
