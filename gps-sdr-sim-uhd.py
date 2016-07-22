@@ -38,7 +38,7 @@ class top_block(gr.top_block):
         self.blocks_char_to_short = blocks.char_to_short(1)
 
         # convert from interleaved short to complex values
-        self.blocks_interleaved_short_to_complex = blocks.interleaved_short_to_complex(False, False)
+        self.blocks_interleaved_short_to_complex = blocks.interleaved_short_to_complex(False)
 
         # establish the connections
         self.connect((self.blocks_file_source, 0), (self.blocks_char_to_short, 0))
