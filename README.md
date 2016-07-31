@@ -62,6 +62,7 @@ Options:
   -g <nmea_gga>    NMEA GGA stream (dynamic mode)
   -l <location>    Lat,Lon,Hgt (static mode) e.g. 30.286502,120.032669,100
   -t <date,time>   Scenario start time YYYY/MM/DD,hh:mm:ss
+  -T <date,time>   Overwrite TOC and TOE to scenario start time
   -d <duration>    Duration [sec] (max: 300)
   -o <output>      I/Q sampling data file (default: gpssim.bin)
   -s <frequency>   Sampling frequency [Hz] (default: 2600000)
