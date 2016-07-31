@@ -200,6 +200,25 @@ void date2gps(const datetime_t *t, gpstime_t *g)
 	return;
 }
 
+void gps2date(const gpstime_t *g, datetime_t *t)
+{
+	// Convert Julian day number to calendar date
+	int c = (int)(7*g->week + floor(g->sec/86400.0)+2444245.0) + 1537;
+	int d = (int)((c-122.1)/365.25);
+	int e = 365*d + d/4;
+	int f = (int)((c-e)/30.6001);
+
+	t->d = c - e - (int)(30.6001*f);
+	t->m = f - 1 - 12*(f/14);
+	t->y = d - 4715 - ((7 + t->m)/10);
+
+	t->hh = ((int)(g->sec/3600.0))%24;
+	t->mm = ((int)(g->sec/60.0))%60;
+	t->sec = g->sec - 60.0*floor(g->sec/60.0);
+
+	return;
+}
+
 /*! \brief Convert Earth-centered Earth-fixed (ECEF) into Lat/Long/Heighth
  *  \param[in] xyz Input Array of X, Y and Z ECEF coordinates
  *  \param[out] llh Output Array of Latitude, Longitude and Height
@@ -715,6 +734,28 @@ double subGpsTime(gpstime_t g1, gpstime_t g0)
 	dt += (double)(g1.week - g0.week) * SECONDS_IN_WEEK;
 
 	return(dt);
+}
+
+gpstime_t incGpsTime(gpstime_t g0, double dt)
+{
+	gpstime_t g1;
+
+	g1.week = g0.week;
+	g1.sec = g0.sec + dt;
+
+	while (g1.sec>SECONDS_IN_WEEK)
+	{
+		g1.sec -= SECONDS_IN_WEEK;
+		g1.week++;
+	}
+
+	while (g1.sec<0.0)
+	{
+		g1.sec += SECONDS_IN_WEEK;
+		g1.week--;
+	}
+
+	return(g1);
 }
 
 /*! \brief Read Ephemersi data from the RINEX Navigation file */
@@ -1377,6 +1418,7 @@ void usage(void)
 		"  -g <nmea_gga>    NMEA GGA stream (dynamic mode)\n"
 		"  -l <location>    Lat,Lon,Hgt (static mode) e.g. 30.286502,120.032669,100\n"
 		"  -t <date,time>   Scenario start time YYYY/MM/DD,hh:mm:ss\n"
+		"  -T <date,time>   Overwrite TOC and TOE to scenario start time\n"
 		"  -d <duration>    Duration [sec] (max: %.0f)\n"
 		"  -o <output>      I/Q sampling data file (default: gpssim.bin)\n"
 		"  -s <frequency>   Sampling frequency [Hz] (default: 2600000)\n"
@@ -1445,6 +1487,8 @@ int main(int argc, char *argv[])
 	int iduration;
 	int verb;
 
+	int timeoverwrite = FALSE; // Overwirte the TOC and TOE in the RINEX file
+
 	////////////////////////////////////////////////////////////
 	// Read options
 	////////////////////////////////////////////////////////////
@@ -1465,7 +1509,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:g:l:o:s:b:t:d:v"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:g:l:o:s:b:T:t:d:v"))!=-1)
 	{
 		switch (result)
 		{
@@ -1507,6 +1551,8 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			break;
+		case 'T':
+			timeoverwrite = TRUE;
 		case 't':
 			sscanf(optarg, "%d/%d/%d,%d:%d:%lf", &t0.y, &t0.m, &t0.d, &t0.hh, &t0.mm, &t0.sec);
 			if (t0.y<=1980 || t0.m<1 || t0.m>12 || t0.d<1 || t0.d>31 ||
@@ -1638,18 +1684,50 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (g0.week>=0)
+	if (g0.week>=0) // Scenario start time has been set.
 	{
-		if (subGpsTime(g0, gmin)<0.0 || subGpsTime(gmax, g0)<0.0)
+		if (timeoverwrite==TRUE)
 		{
-			printf("ERROR: Invalid start time.\n");
-			printf("tmin = %4d/%02d/%02d,%02d:%02d:%02.0f (%d:%.0f)\n", 
-				tmin.y, tmin.m, tmin.d, tmin.hh, tmin.mm, tmin.sec,
-				gmin.week, gmin.sec);
-			printf("tmax = %4d/%02d/%02d,%02d:%02d:%02.0f (%d:%.0f)\n", 
-				tmax.y, tmax.m, tmax.d, tmax.hh, tmax.mm, tmax.sec,
-				gmax.week, gmax.sec);
-			exit(1);
+			gpstime_t gtmp;
+			datetime_t ttmp;
+			double dsec;
+
+			gtmp.week = g0.week;
+			gtmp.sec = (double)(((int)(g0.sec))/7200)*7200.0;
+
+			dsec = subGpsTime(gtmp,gmin);
+
+			// Overwrite the TOC and TOE to the scenario start time
+			for (sv=0; sv<MAX_SAT; sv++)
+			{
+				for (i=0; i<neph; i++)
+				{
+					if (eph[i][sv].vflg == 1)
+					{
+						gtmp = incGpsTime(eph[i][sv].toc, dsec);
+						gps2date(&gtmp,&ttmp);
+						eph[i][sv].toc = gtmp;
+						eph[i][sv].t = ttmp;
+						
+						gtmp = incGpsTime(eph[i][sv].toe, dsec);
+						eph[i][sv].toe = gtmp;
+					}
+				}
+			}
+		}
+		else
+		{
+			if (subGpsTime(g0, gmin)<0.0 || subGpsTime(gmax, g0)<0.0)
+			{
+				printf("ERROR: Invalid start time.\n");
+				printf("tmin = %4d/%02d/%02d,%02d:%02d:%02.0f (%d:%.0f)\n", 
+					tmin.y, tmin.m, tmin.d, tmin.hh, tmin.mm, tmin.sec,
+					gmin.week, gmin.sec);
+				printf("tmax = %4d/%02d/%02d,%02d:%02d:%02.0f (%d:%.0f)\n", 
+					tmax.y, tmax.m, tmax.d, tmax.hh, tmax.mm, tmax.sec,
+					gmax.week, gmax.sec);
+				exit(1);
+			}
 		}
 	}
 	else
