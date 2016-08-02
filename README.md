@@ -67,6 +67,7 @@ Options:
   -o <output>      I/Q sampling data file (default: gpssim.bin)
   -s <frequency>   Sampling frequency [Hz] (default: 2600000)
   -b <iq_bits>     I/Q data format [1/8/16] (default: 16)
+  -i               Disable ionospheric delay for spacecraft scenario
   -v               Show details about simulated channels
 ```
 
