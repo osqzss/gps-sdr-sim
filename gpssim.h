@@ -42,6 +42,11 @@
 #define POW2_M43 1.136868377216160e-13
 #define POW2_M55 2.775557561562891e-17
 
+#define POW2_M50 8.881784197001252e-016
+#define POW2_M30 9.313225746154785e-010
+#define POW2_M27 7.450580596923828e-009
+#define POW2_M24 5.960464477539063e-008
+
 // Conventional values employed in GPS ephemeris model (ICD-GPS-200)
 #define GM_EARTH 3.986005e14
 #define OMEGA_EARTH 7.2921151467e-5
@@ -123,11 +128,23 @@ typedef struct
 
 typedef struct
 {
+	int enable;
+	int vflg;
+	double alpha0,alpha1,alpha2,alpha3;
+	double beta0,beta1,beta2,beta3;
+	double A0,A1;
+	int dtls,tot,wnt;
+	int dtlsf,dn,wnlsf;
+} ionoutc_t;
+
+typedef struct
+{
 	gpstime_t g;
 	double range; // pseudorange
 	double rate;
 	double d; // geometric distance
 	double azel[2];
+	double iono_delay;
 } range_t;
 
 /*! \brief Structure representing a Channel */
