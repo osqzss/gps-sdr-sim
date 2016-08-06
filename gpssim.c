@@ -488,7 +488,7 @@ void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
  *  \param[in] eph Ephemeris of given SV
  *  \param[out] sbf Array of five sub-frames, 10 long words each
  */
-void eph2sbf(const ephem_t eph, const ionoutc_t ionoutc, long sbf[5][N_DWRD_SBF])
+void eph2sbf(const ephem_t eph, const ionoutc_t ionoutc, unsigned long sbf[5][N_DWRD_SBF])
 {
 	unsigned long wn;
 	unsigned long toe;
@@ -1283,8 +1283,8 @@ void computeRange(range_t *rho, ephem_t eph, ionoutc_t *ionoutc, gpstime_t g, do
 	neu2azel(rho->azel, neu);
 
 	// Add ionospheric delay
-		rho->iono_delay = ionosphericDelay(ionoutc, g, llh, rho->azel);
-		rho->range += rho->iono_delay;
+	rho->iono_delay = ionosphericDelay(ionoutc, g, llh, rho->azel);
+	rho->range += rho->iono_delay;
 
 	return;
 }
@@ -1714,7 +1714,7 @@ int main(int argc, char *argv[])
 	data_format = SC16;
 	g0.week = -1; // Invalid start time
 	iduration = USER_MOTION_SIZE;
-	verb = 0;
+	verb = FALSE;
 	ionoutc.enable = TRUE;
 
 	if (argc<3)
@@ -1810,7 +1810,7 @@ int main(int argc, char *argv[])
 			ionoutc.enable = FALSE; // Disable ionospheric correction
 			break;
 		case 'v':
-			verb = 1;
+			verb = TRUE;
 			break;
 		case ':':
 		case '?':
@@ -1899,8 +1899,8 @@ int main(int argc, char *argv[])
 		printf("ERROR: No ephemeris available.\n");
 		exit(1);
 	}
-/*
-	if (ionoutc.vflg==TRUE)
+
+	if ((verb==TRUE)&&(ionoutc.vflg==TRUE))
 	{
 		printf("  %12.3e %12.3e %12.3e %12.3e\n", 
 			ionoutc.alpha0, ionoutc.alpha1, ionoutc.alpha2, ionoutc.alpha3);
@@ -1910,7 +1910,7 @@ int main(int argc, char *argv[])
 			ionoutc.A0, ionoutc.A1, ionoutc.tot, ionoutc.wnt);
 		printf("%6d\n", ionoutc.dtls);
 	}
-*/
+
 	for (sv=0; sv<MAX_SAT; sv++) 
 	{
 		if (eph[0][sv].vflg==1)
@@ -2234,7 +2234,7 @@ int main(int argc, char *argv[])
 			allocateChannel(chan, eph[ieph], ionoutc, grx, xyz[iumd], elvmask);
 
 			// Show ditails about simulated channels
-			if (verb)
+			if (verb==TRUE)
 			{
 				printf("\n");
 				for (i=0; i<MAX_CHAN; i++)
