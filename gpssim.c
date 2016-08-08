@@ -2105,8 +2105,8 @@ int main(int argc, char *argv[])
 			if (chan[i].prn>0)
 			{
 				// Refresh code phase and data bit counters
-				int sv = chan[i].prn-1;
 				range_t rho;
+				sv = chan[i].prn-1;
 
 				// Current pseudorange
 				computeRange(&rho, eph[ieph][sv], &ionoutc, grx, xyz[iumd]);
@@ -2229,6 +2229,29 @@ int main(int argc, char *argv[])
 			for (i=0; i<MAX_CHAN; i++)
 				if (chan[i].prn>0)
 					generateNavMsg(grx, &chan[i], 0);
+
+			// Refresh ephemeris and subframes
+			// Quick and dirty fix. Need more elegant way.
+			for (sv=0; sv<MAX_SAT; sv++)
+			{
+				if (eph[ieph+1][sv].vflg==1)
+				{
+					dt = subGpsTime(eph[ieph+1][sv].toc, grx);
+					if (dt<SECONDS_IN_HOUR)
+					{
+						ieph++;
+
+						for (i=0; i<MAX_CHAN; i++)
+						{
+							// Generate new subframes if allocated
+							if (chan[i].prn!=0) 
+								eph2sbf(eph[ieph][chan[i].prn-1], ionoutc, chan[i].sbf);
+						}
+					}
+						
+					break;
+				}
+			}
 
 			// Update channel allocation
 			allocateChannel(chan, eph[ieph], ionoutc, grx, xyz[iumd], elvmask);
