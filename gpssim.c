@@ -530,7 +530,9 @@ void eph2sbf(const ephem_t eph, const ionoutc_t ionoutc, unsigned long sbf[5][N_
 	unsigned long tot,wnt,wnlsf,dn;
 	unsigned long sbf4_page18_svId = 56UL;
 
-	wn = (unsigned long)(eph.toe.week%1024);
+	// FIXED: This has to be the "transmission" week number, not for the ephemeris reference time
+	//wn = (unsigned long)(eph.toe.week%1024);
+	wn = 0UL;
 	toe = (unsigned long)(eph.toe.sec/16.0);
 	toc = (unsigned long)(eph.toc.sec/16.0);
 	iode = (unsigned long)(eph.iode);
@@ -572,9 +574,10 @@ void eph2sbf(const ephem_t eph, const ionoutc_t ionoutc, unsigned long sbf[5][N_
 	tot = (unsigned long)(ionoutc.tot/4096);
 	wnt = (unsigned long)(ionoutc.wnt%256);
 	// TO DO: Specify scheduled leap seconds in command options
-	// 2016/12/31 (Sat) -> WNlsf = 1929, DN = 6 (http://navigationservices.agi.com/GNSSWeb/)
+	// 2016/12/31 (Sat) -> WNlsf = 1929, DN = 7 (http://navigationservices.agi.com/GNSSWeb/)
+	// Days are counted from 1 to 7 (Sunday is 1).
 	wnlsf = 1929%256;
-	dn = 6;
+	dn = 7;
 	dtlsf = 18;
 
 	// Subframe 1
@@ -625,7 +628,7 @@ void eph2sbf(const ephem_t eph, const ionoutc_t ionoutc, unsigned long sbf[5][N_
 		sbf[3][6] = ((A0>>8)&0xFFFFFFUL)<<6;
 		sbf[3][7] = ((A0&0xFFUL)<<22) | ((tot&0xFFUL)<<14) | ((wnt&0xFFUL)<<6);
 		sbf[3][8] = ((dtls&0xFFUL)<<22) | ((wnlsf&0xFFUL)<<14) | ((dn&0xFFUL)<<6);
-		sbf[3][9] = (dtlsf&0xFF)<<22;
+		sbf[3][9] = (dtlsf&0xFFUL)<<22;
 	
 	}
 	else
@@ -787,7 +790,9 @@ gpstime_t incGpsTime(gpstime_t g0, double dt)
 	g1.week = g0.week;
 	g1.sec = g0.sec + dt;
 
-	while (g1.sec>SECONDS_IN_WEEK)
+	g1.sec = round(g1.sec*1000.0)/1000.0; // Avoid rounding error
+
+	while (g1.sec>=SECONDS_IN_WEEK)
 	{
 		g1.sec -= SECONDS_IN_WEEK;
 		g1.week++;
@@ -1308,7 +1313,7 @@ void computeCodePhase(channel_t *chan, range_t rho1, double dt)
 	chan->f_code = CODE_FREQ + chan->f_carr*CARR_TO_CODE;
 
 	// Initial code phase and data bit counters.
-	ms = (((chan->rho0.g.sec-chan->g0.sec)+6.0) - chan->rho0.range/SPEED_OF_LIGHT)*1000.0;
+	ms = ((subGpsTime(chan->rho0.g,chan->g0)+6.0) - chan->rho0.range/SPEED_OF_LIGHT)*1000.0;
 
 	ims = (int)ms;
 	chan->code_phase = (ms-(double)ims)*CA_SEQ_LEN; // in chip
@@ -1448,7 +1453,7 @@ int generateNavMsg(gpstime_t g, channel_t *chan, int init)
 {
 	int iwrd,isbf;
 	gpstime_t g0;
-	unsigned long tow;
+	unsigned long wn,tow;
 	unsigned sbfwrd;
 	unsigned long prevwrd;
 	int nib;
@@ -1457,6 +1462,7 @@ int generateNavMsg(gpstime_t g, channel_t *chan, int init)
 	g0.sec = (double)(((unsigned long)(g.sec+0.5))/30UL) * 30.0; // Align with the full frame length = 30 sec
 	chan->g0 = g0; // Data bit reference time
 
+	wn = (unsigned long)(g0.week%1024);
 	tow = ((unsigned long)g0.sec)/6UL;
 
 	if (init==1) // Initialize subframe 5
@@ -1504,6 +1510,10 @@ int generateNavMsg(gpstime_t g, channel_t *chan, int init)
 		for (iwrd=0; iwrd<N_DWRD_SBF; iwrd++)
 		{
 			sbfwrd = chan->sbf[isbf][iwrd];
+
+			// Add transmission week number to Subframe 1
+			if ((isbf==0)&&(iwrd==2))
+				sbfwrd |= (wn&0x3FFUL)<<20;
 
 			// Add TOW-count message into HOW
 			if (iwrd==1)
@@ -1944,6 +1954,13 @@ int main(int argc, char *argv[])
 
 			dsec = subGpsTime(gtmp,gmin);
 
+			// Overwrite the UTC reference week number
+			ionoutc.wnt = gtmp.week;
+			ionoutc.tot = (int)gtmp.sec;
+
+			// Iono/UTC parameters may no longer valid
+			//ionoutc.vflg = FALSE;
+
 			// Overwrite the TOC and TOE to the scenario start time
 			for (sv=0; sv<MAX_SAT; sv++)
 			{
@@ -1955,15 +1972,12 @@ int main(int argc, char *argv[])
 						gps2date(&gtmp,&ttmp);
 						eph[i][sv].toc = gtmp;
 						eph[i][sv].t = ttmp;
-						
+
 						gtmp = incGpsTime(eph[i][sv].toe, dsec);
 						eph[i][sv].toe = gtmp;
 					}
 				}
 			}
-
-			// UTC parameters may no longer valid
-			//ionoutc.vflg = FALSE;
 		}
 		else
 		{
@@ -2070,7 +2084,7 @@ int main(int argc, char *argv[])
 		allocatedSat[sv] = -1;
 
 	// Initial reception time
-	grx = g0;
+	grx = incGpsTime(g0, 0.0);
 
 	// Allocate visible satellites
 	allocateChannel(chan, eph[ieph], ionoutc, grx, xyz[0], elvmask);
@@ -2096,7 +2110,7 @@ int main(int argc, char *argv[])
 	tstart = clock();
 
 	// Update receiver time
-	grx.sec += 0.1;
+	grx = incGpsTime(grx, 0.1);
 
 	for (iumd=1; iumd<numd; iumd++)
 	{
@@ -2227,8 +2241,10 @@ int main(int argc, char *argv[])
 		{
 			// Update navigation message
 			for (i=0; i<MAX_CHAN; i++)
+			{
 				if (chan[i].prn>0)
 					generateNavMsg(grx, &chan[i], 0);
+			}
 
 			// Refresh ephemeris and subframes
 			// Quick and dirty fix. Need more elegant way.
@@ -2270,10 +2286,10 @@ int main(int argc, char *argv[])
 		}
 
 		// Update receiver time
-		grx.sec += 0.1;
+		grx = incGpsTime(grx, 0.1);
 
 		// Update time counter
-		printf("\rTime into run = %4.1f", grx.sec-g0.sec);
+		printf("\rTime into run = %4.1f", subGpsTime(grx, g0));
 		fflush(stdout);
 	}
 
