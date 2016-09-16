@@ -938,6 +938,11 @@ int readRinexNavAll(ephem_t eph[][MAX_SAT], ionoutc_t *ionoutc, const char *fnam
 		if (NULL==fgets(str, MAX_CHAR, fp))
 			break;
 
+		// PRN
+		strncpy(tmp, str, 2);
+		tmp[2] = 0;
+		sv = atoi(tmp)-1;
+
 		// EPOCH
 		strncpy(tmp, str+3, 2);
 		tmp[2] = 0;
@@ -982,11 +987,6 @@ int readRinexNavAll(ephem_t eph[][MAX_SAT], ionoutc_t *ionoutc, const char *fnam
 
 		// Date and time
 		eph[ieph][sv].t = t;
-
-		// PRN
-		strncpy(tmp, str, 2);
-		tmp[2] = 0;
-		sv = atoi(tmp)-1;
 
 		// SV CLK
 		eph[ieph][sv].toc = g;
