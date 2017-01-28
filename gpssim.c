@@ -515,7 +515,7 @@ void eph2sbf(const ephem_t eph, const ionoutc_t ionoutc, unsigned long sbf[5][N_
 	long af2;
 	long tgd;
 
-	unsigned long ura = 2UL;
+	unsigned long ura = 0UL;
 	unsigned long dataId = 1UL;
 	unsigned long sbf4_page25_svId = 63UL;
 	unsigned long sbf5_page25_svId = 51UL;
