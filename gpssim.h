@@ -119,6 +119,8 @@ typedef struct
 	double af1;	/*!< rate (sec/sec) */
 	double af2;	/*!< acceleration (sec/sec^2) */
 	double tgd;	/*!< Group delay L2 bias */
+	int svhlth;
+	int codeL2;
 	// Working variables follow
 	double n; 	/*!< Mean motion (Average angular velocity) */
 	double sq1e2;	/*!< sqrt(1-e^2) */
