@@ -16,6 +16,9 @@
 /*! \brief Maximum number of user motion points */
 #define USER_MOTION_SIZE (3000) // max duration at 10Hz
 
+/*! \brief Maximum duration for static mode*/
+#define STATIC_MAX_DURATION (86400) // second
+
 /*! \brief Number of subframes */
 #define N_SBF (5) // 5 subframes per frame
 
