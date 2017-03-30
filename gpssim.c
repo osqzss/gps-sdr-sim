@@ -1727,6 +1727,7 @@ int main(int argc, char *argv[])
 	int timeoverwrite = FALSE; // Overwirte the TOC and TOE in the RINEX file
 
 	ionoutc_t ionoutc;
+	int nsat = -1;
 
 	////////////////////////////////////////////////////////////
 	// Read options
@@ -2099,7 +2100,7 @@ int main(int argc, char *argv[])
 	grx = incGpsTime(g0, 0.0);
 
 	// Allocate visible satellites
-	allocateChannel(chan, eph[ieph], ionoutc, grx, xyz[0], elvmask);
+	nsat = allocateChannel(chan, eph[ieph], ionoutc, grx, xyz[0], elvmask);
 
 	for(i=0; i<MAX_CHAN; i++)
 	{
@@ -2172,8 +2173,9 @@ int main(int argc, char *argv[])
 					ip = chan[i].dataBit * chan[i].codeCA * cosTable512[iTable] * gain[i];
 					qp = chan[i].dataBit * chan[i].codeCA * sinTable512[iTable] * gain[i];
 
-					i_acc += (ip + 50)/100;
-					q_acc += (qp + 50)/100;
+
+					i_acc += ip;
+					q_acc += qp;
 
 					// Update code phase
 					chan[i].code_phase += chan[i].f_code * delt;
@@ -2211,6 +2213,11 @@ int main(int argc, char *argv[])
 					chan[i].carr_phase += chan[i].carr_phasestep;
 				}
 			}
+
+			i_acc += 50*nsat;
+			q_acc += 50*nsat;
+			i_acc /= 100;
+			q_acc /= 100;
 
 			// Store I/Q samples into buffer
 			iq_buff[isamp*2] = (short)i_acc;
@@ -2286,9 +2293,9 @@ int main(int argc, char *argv[])
 
 			// Update channel allocation
 			if (!staticLocationMode)
-				allocateChannel(chan, eph[ieph], ionoutc, grx, xyz[iumd], elvmask);
+				nsat = allocateChannel(chan, eph[ieph], ionoutc, grx, xyz[iumd], elvmask);
 			else
-				allocateChannel(chan, eph[ieph], ionoutc, grx, xyz[0], elvmask);
+				nsat = allocateChannel(chan, eph[ieph], ionoutc, grx, xyz[0], elvmask);
 
 			// Show ditails about simulated channels
 			if (verb==TRUE)
@@ -2324,5 +2331,6 @@ int main(int argc, char *argv[])
 	// Process time
 	printf("Process time = %.1f [sec]\n", (double)(tend-tstart)/CLOCKS_PER_SEC);
 
+	getch();
 	return(0);
 }
