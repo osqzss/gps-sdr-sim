@@ -1857,7 +1857,7 @@ int main(int argc, char *argv[])
 		llh[2] = 10.0;
 	}
 
-	if (duration<0.0 || duration>((double)USER_MOTION_SIZE) / 10.0 && !staticLocationMode || duration>STATIC_MAX_DURATION && staticLocationMode)
+	if (duration<0.0 || (duration>((double)USER_MOTION_SIZE)/10.0 && !staticLocationMode) || (duration>STATIC_MAX_DURATION && staticLocationMode))
 	{
 		printf("ERROR: Invalid duration.\n");
 		exit(1);
