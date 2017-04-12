@@ -5,7 +5,6 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
-#include <omp.h>
 #ifdef _WIN32
 #include "getopt.h"
 #else
