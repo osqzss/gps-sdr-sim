@@ -38,3 +38,9 @@ gps-sdr-sim-lut
 
 # Temporary files
 *.swp
+
+*.db
+*.opendb
+Debug
+Release
+.vs
