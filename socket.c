@@ -9,16 +9,15 @@
 #include <fcntl.h>
 #include <sys/shm.h>
 
-#define MYPORT  1234
 
 
-int sockinit()
+int sockinit(short port)
 {
     int sock = socket(AF_INET,SOCK_STREAM, 0);
     struct sockaddr_in servaddr;
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(MYPORT);  
+    servaddr.sin_port = htons(port);  
     servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");  
     if (connect(sock, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
     {

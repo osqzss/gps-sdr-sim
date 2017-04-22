@@ -1661,8 +1661,8 @@ void usage(void)
 		"  -b <iq_bits>     I/Q data format [1/8/16] (default: 16)\n"
 		"  -i               Disable ionospheric delay for spacecraft scenario\n"
 		"  -v               Show details about simulated channels\n",
-		"  -n               Use TCP connect to gnuradio for realtime simulation\n",
-		((double)USER_MOTION_SIZE) / 10.0, STATIC_MAX_DURATION);
+		"  -n               Use TCP connect to Gnuradio TCP-Source for\n realtime simulation and port(default 1234)\n",
+		(USER_MOTION_SIZE)/10.0,STATIC_MAX_DURATION);
 
 	return;
 }
@@ -1732,6 +1732,7 @@ int main(int argc, char *argv[])
 	
 	int usesocket=false;
 	int sockc=0;
+	short port=1234;
 
 	////////////////////////////////////////////////////////////
 	// Read options
@@ -1755,7 +1756,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:g:l:o:s:b:T:t:d:iv:n"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:g:l:o:s:b:T:t:d:iv:n:"))!=-1)
 	{
 		switch (result)
 		{
@@ -1843,7 +1844,8 @@ int main(int argc, char *argv[])
 			usage();
 			exit(1);
 		case 'n':
-			sockc=sockinit();
+			sscanf(optarg,"%hd",&port);
+			sockc=sockinit(port);
 			usesocket=true;
 		default:
 			break;
