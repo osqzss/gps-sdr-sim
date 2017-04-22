@@ -22,8 +22,7 @@ $ gcc gpssim.c -lm -O3 -o gps-sdr-sim
 
 Use -n option can connect to a TCP source in Gnuradio for realtime simulation.
 
-The tcp source should be set in "Server" mode, listening to port 1234.
-
+The tcp source should be set in "Server" mode, listening to port 1234 (as default, it can be changed by.option -n).
 See tcp.grc as a example.
 
 ### Generating the GPS signal file
