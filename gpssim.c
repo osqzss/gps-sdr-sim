@@ -1661,7 +1661,7 @@ void usage(void)
 		"  -b <iq_bits>     I/Q data format [1/8/16] (default: 16)\n"
 		"  -i               Disable ionospheric delay for spacecraft scenario\n"
 		"  -v               Show details about simulated channels\n",
-		"  -n <port>        Use TCP connect to Gnuradio TCP-Source for\n realtime simulation. (default 1234)\n",
+		"  -n <port>        Use TCP connect to Gnuradio TCP-Source for\n realtime simulation.\n",
 		(USER_MOTION_SIZE)/10.0,STATIC_MAX_DURATION);
 
 	return;

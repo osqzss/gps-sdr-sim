@@ -183,7 +183,7 @@
     </param>
     <param>
       <key>freq0</key>
-      <value>100e6</value>
+      <value>1575420000</value>
     </param>
     <param>
       <key>if_gain0</key>

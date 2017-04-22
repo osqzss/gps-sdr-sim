@@ -2,7 +2,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Top Block
-# Generated: Sun Apr 23 02:13:05 2017
+# Generated: Sun Apr 23 02:23:32 2017
 ##################################################
 
 if __name__ == '__main__':
@@ -62,7 +62,7 @@ class top_block(gr.top_block, Qt.QWidget):
         ##################################################
         self.osmosdr_sink_0 = osmosdr.sink( args="numchan=" + str(1) + " " + "hackrf" )
         self.osmosdr_sink_0.set_sample_rate(samp_rate)
-        self.osmosdr_sink_0.set_center_freq(100e6, 0)
+        self.osmosdr_sink_0.set_center_freq(1575420000, 0)
         self.osmosdr_sink_0.set_freq_corr(0, 0)
         self.osmosdr_sink_0.set_gain(14, 0)
         self.osmosdr_sink_0.set_if_gain(40, 0)
@@ -73,7 +73,7 @@ class top_block(gr.top_block, Qt.QWidget):
         self.blks2_tcp_source_0 = grc_blks2.tcp_source(
         	itemsize=gr.sizeof_gr_complex*1,
         	addr="127.0.0.1",
-        	port=2345,
+        	port=1234,
         	server=True,
         )
         (self.blks2_tcp_source_0).set_max_output_buffer(10000)
