@@ -35,4 +35,8 @@ void socksend(int s,void *dataa,int siz){
 	send(s,dataa,siz,0);
 }
 
-
+long int timem(){
+	struct timeval t;
+	gettimeofday(&t, NULL);
+	return t.tv_sec*1000+t.tv_usec/1000;
+}

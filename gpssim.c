@@ -13,6 +13,7 @@
 #include "gpssim.h"
 #include "socket.c"
 
+
 int sinTable512[] = {
 	   2,   5,   8,  11,  14,  17,  20,  23,  26,  29,  32,  35,  38,  41,  44,  47,
 	  50,  53,  56,  59,  62,  65,  68,  71,  74,  77,  80,  83,  86,  89,  91,  94,
@@ -1867,7 +1868,7 @@ int main(int argc, char *argv[])
 		llh[2] = 10.0;
 	}
 
-	if (duration<0.0 || (duration>((double)USER_MOTION_SIZE)/10.0 && !staticLocationMode) || (duration>STATIC_MAX_DURATION && staticLocationMode)&&usesocket==false)
+	if (duration<0.0 || (duration>((double)USER_MOTION_SIZE)/10.0 && !staticLocationMode) || (duration>STATIC_MAX_DURATION && staticLocationMode&&usesocket==false))
 	{
 		printf("ERROR: Invalid duration.\n");
 		exit(1);
@@ -2131,7 +2132,7 @@ int main(int argc, char *argv[])
 	////////////////////////////////////////////////////////////
 
 	tstart = clock();
-
+	long int  timestart=timem();
 	// Update receiver time
 	grx = incGpsTime(grx, 0.1);
 
@@ -2323,8 +2324,8 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
-		if(subGpsTime(grx, g0)-(double)(clock()-tstart)/CLOCKS_PER_SEC>0.2&&usesocket==true){
-			sleep(0.2);
+		if(subGpsTime(grx, g0)-(float)(timem()-timestart)/1000>0.1&&usesocket==true){
+			usleep(100000);
 		}
 		// Update receiver time
 		grx = incGpsTime(grx, 0.1);
@@ -2333,7 +2334,7 @@ int main(int argc, char *argv[])
 		printf("\rTime into run = %4.1f", subGpsTime(grx, g0));
 		fflush(stdout);
 	}
-
+ 
 	tend = clock();
 
 	printf("\nDone!\n");
