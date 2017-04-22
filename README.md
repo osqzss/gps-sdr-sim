@@ -18,11 +18,12 @@ to RF using software-defined radio (SDR) platforms, such as
 $ gcc gpssim.c -lm -O3 -o gps-sdr-sim
 ```
 
-## Realtime
+## Realtime by Gnuradio
 
 Use -n option can connect to a TCP source in Gnuradio for realtime simulation.
 
 The tcp source should be set in "Server" mode, listening to port 1234 (as default, it can be changed by.option -n).
+
 See tcp.grc as a example.
 
 ### Generating the GPS signal file
@@ -76,7 +77,7 @@ Options:
   -b <iq_bits>     I/Q data format [1/8/16] (default: 16)
   -i               Disable ionospheric delay for spacecraft scenario
   -v               Show details about simulated channels
-  -n               Use tcp connect to gnuradio for realtime simulation
+  -n <port>        Use TCP connection to Gnuradio TCP-Source for realtime simulation. (Default 1234).
 ```
 
 The user motion can be specified in either dynamic or static mode:
@@ -91,6 +92,12 @@ The user motion can be specified in either dynamic or static mode:
 
 ```
 > gps-sdr-sim -e brdc3540.14n -l 30.286502,120.032669,100
+```
+
+Use Gnuradio to realtime simulate 3000s:
+
+```
+> gps-sdr-sim -e brdc3540.14n -l 30.286502,120.032669,100 -n 1234 -d 3000
 ```
 
 ### Transmitting the samples

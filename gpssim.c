@@ -1661,7 +1661,7 @@ void usage(void)
 		"  -b <iq_bits>     I/Q data format [1/8/16] (default: 16)\n"
 		"  -i               Disable ionospheric delay for spacecraft scenario\n"
 		"  -v               Show details about simulated channels\n",
-		"  -n               Use TCP connect to Gnuradio TCP-Source for\n realtime simulation and port(default 1234)\n",
+		"  -n <port>        Use TCP connect to Gnuradio TCP-Source for\n realtime simulation. (default 1234)\n",
 		(USER_MOTION_SIZE)/10.0,STATIC_MAX_DURATION);
 
 	return;
@@ -1867,7 +1867,7 @@ int main(int argc, char *argv[])
 		llh[2] = 10.0;
 	}
 
-	if (duration<0.0 || (duration>((double)USER_MOTION_SIZE)/10.0 && !staticLocationMode) || (duration>STATIC_MAX_DURATION && staticLocationMode))
+	if (duration<0.0 || (duration>((double)USER_MOTION_SIZE)/10.0 && !staticLocationMode) || (duration>STATIC_MAX_DURATION && staticLocationMode)&&usesocket==false)
 	{
 		printf("ERROR: Invalid duration.\n");
 		exit(1);

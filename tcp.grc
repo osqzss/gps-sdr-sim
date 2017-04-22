@@ -124,7 +124,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(272, 200)</value>
+      <value>(280, 200)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -152,7 +152,7 @@
     </param>
     <param>
       <key>port</key>
-      <value>2345</value>
+      <value>1234</value>
     </param>
     <param>
       <key>vlen</key>
@@ -1071,7 +1071,7 @@
     </param>
     <param>
       <key>args</key>
-      <value>hackrf=81320f</value>
+      <value>hackrf</value>
     </param>
     <param>
       <key>_enabled</key>
