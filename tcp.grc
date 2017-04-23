@@ -167,7 +167,7 @@
     </param>
     <param>
       <key>ant0</key>
-      <value>1</value>
+      <value>RX/TX</value>
     </param>
     <param>
       <key>bb_gain0</key>
@@ -175,7 +175,7 @@
     </param>
     <param>
       <key>bw0</key>
-      <value>0</value>
+      <value>2600000</value>
     </param>
     <param>
       <key>corr0</key>
@@ -1171,7 +1171,7 @@
     </param>
     <param>
       <key>sync</key>
-      <value></value>
+      <value>pc_clock</value>
     </param>
   </block>
   <block>
@@ -1198,7 +1198,7 @@
     </param>
     <param>
       <key>_enabled</key>
-      <value>0</value>
+      <value>1</value>
     </param>
     <param>
       <key>fftsize</key>

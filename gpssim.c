@@ -1757,7 +1757,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:g:l:o:s:b:T:t:d:iv:n:"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:g:l:o:s:b:T:t:d:ivn:"))!=-1)
 	{
 		switch (result)
 		{
