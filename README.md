@@ -24,7 +24,7 @@ Use -n option can connect to a TCP source in Gnuradio for realtime simulation.
 
 The tcp source should be set in "Server" mode.
 
-See tcp.grc as a example.
+See tcp.grc as an example.
 
 ### Generating the GPS signal file
 
