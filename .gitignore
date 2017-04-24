@@ -38,3 +38,4 @@ gps-sdr-sim-lut
 
 # Temporary files
 *.swp
+*~
