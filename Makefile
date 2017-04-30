@@ -6,7 +6,7 @@ all: gps-sdr-sim
 SHELL=/bin/bash
 CC=gcc
 CFLAGS=-O3 -Wall
-LDFLAGS=-lm
+LDFLAGS=-lm -lpthread
 
 gps-sdr-sim: gpssim.o
 	${CC} $< ${LDFLAGS} -o $@

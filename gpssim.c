@@ -12,7 +12,7 @@
 #endif
 #include "gpssim.h"
 #include "socket.c"
-
+#include <pthread.h>
 
 int sinTable512[] = {
 	   2,   5,   8,  11,  14,  17,  20,  23,  26,  29,  32,  35,  38,  41,  44,  47,
@@ -1732,6 +1732,7 @@ int main(int argc, char *argv[])
 	
 	
 	int usesocket=false;
+	int webflag=0;
 	int sockc=0;
 	short port=1234;
 
@@ -1757,7 +1758,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:g:l:o:s:b:T:t:d:ivn:"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:g:l:o:s:b:T:t:d:ivn:w"))!=-1)
 	{
 		switch (result)
 		{
@@ -1846,12 +1847,22 @@ int main(int argc, char *argv[])
 			exit(1);
 		case 'n':
 			sscanf(optarg,"%hd",&port);
-			sockc=sockinit(port);
+			
 			usesocket=true;
+		case  'w':
+			staticLocationMode = TRUE;
+			webflag=1;
+			
 		default:
 			break;
 		}
 	}
+	if(webflag==1){
+		pthread_t th;
+		pthread_create(&th,NULL,(void *)threadrecv,NULL);
+	}	
+	if(usesocket==1)
+		sockc=sockinit(port);
 
 	if (navfile[0]==0)
 	{
@@ -2327,6 +2338,13 @@ int main(int argc, char *argv[])
 		if(subGpsTime(grx, g0)-(float)(timem()-timestart)/1000>0.1&&usesocket==true){
 			usleep(100000);
 		}
+		
+		if(webflag==1){
+			memcpy(llh,llhr,3*sizeof(double));
+			llh[0] = llh[0] / R2D; // convert to RAD
+			llh[1] = llh[1] / R2D; // convert to RAD
+			llh2xyz(llh,xyz[0]);
+		}
 		// Update receiver time
 		grx = incGpsTime(grx, 0.1);
 
@@ -2351,3 +2369,6 @@ int main(int argc, char *argv[])
 
 	return(0);
 }
+
+
+
