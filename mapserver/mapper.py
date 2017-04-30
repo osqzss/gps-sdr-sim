@@ -22,7 +22,7 @@ app = web.application(urls, globals())
 
 class index:
 	def GET(self):
-		return "Hello, world!"
+		return ""
 
 class post:
 	def POST(self):
