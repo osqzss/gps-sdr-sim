@@ -28,6 +28,8 @@ See tcp.grc as an example.
 
 ### Map
 
+Run gps-sdr-sim with -w option, and 
+
 cd into /mapserver, and run
 
 ```
@@ -36,9 +38,11 @@ python mapper.py
 
 Then visit http://127.0.0.1:8080/static/baidumap.html to use the baidu Online map.
 
+
+
 Actually I don't want to use BaiduMap.. But because of the GFW, I can't access Google..
 
-You can write an map which can POST data to http://127.0.0.1/post like this
+You can write an map which can POST data to http://127.0.0.1:8080/post like this
 
 ```
 lon=116&lat=39&hgt=10
