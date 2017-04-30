@@ -18,13 +18,33 @@ to RF using software-defined radio (SDR) platforms, such as
 $ gcc gpssim.c -lm -O3 -o gps-sdr-sim
 ```
 
-## Realtime by Gnuradio
+### Realtime by Gnuradio
 
 Use -n option can connect to a TCP source in Gnuradio for realtime simulation.
 
 The tcp source should be set in "Server" mode.
 
 See tcp.grc as an example.
+
+### Map
+
+cd into /mapserver, and run
+
+```
+python mapper.py
+```
+
+Then visit http://127.0.0.1:8080/static/baidumap.html to use the baidu Online map.
+
+Actually I don't want to use BaiduMap.. But because of the GFW, I can't access Google..
+
+You can write an map which can POST data to http://127.0.0.1/post like this
+
+```
+lon=116&lat=39&hgt=10
+```
+
+to replace Baidumap.
 
 ### Generating the GPS signal file
 
@@ -78,6 +98,7 @@ Options:
   -i               Disable ionospheric delay for spacecraft scenario
   -v               Show details about simulated channels
   -n <port>        Use TCP connection to Gnuradio TCP-Source for realtime simulation.
+  -w               Connect with map server(/mapserver/mapper.py) by udp on port 5678.
 ```
 
 The user motion can be specified in either dynamic or static mode:
