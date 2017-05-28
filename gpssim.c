@@ -1943,6 +1943,14 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	gmax.sec = 0;
+	gmax.week = 0;
+	tmax.sec = 0;
+	tmax.mm = 0;
+	tmax.hh = 0;
+	tmax.d = 0;
+	tmax.m = 0;
+	tmax.y = 0;
 	for (sv=0; sv<MAX_SAT; sv++)
 	{
 		if (eph[neph-1][sv].vflg == 1)
