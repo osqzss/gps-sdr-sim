@@ -26,7 +26,7 @@ The sampling rate of the user motion has to be 10Hz.
 The user is also able to assign a static location directly through the command line.
 
 The user specifies the GPS satellite constellation through a GPS broadcast 
-ephemeris file. The daily GPS broadcast ephemers file (brdc) is a merge of the
+ephemeris file. The daily GPS broadcast ephemeris file (brdc) is a merge of the
 individual site navigation files into one. The archive for the daily file is:
 
 [ftp://cddis.gsfc.nasa.gov/gnss/data/daily/](ftp://cddis.gsfc.nasa.gov/gnss/data/daily/)
