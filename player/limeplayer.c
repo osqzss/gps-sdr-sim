@@ -8,10 +8,12 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <signal.h>
 
 #include <lime/LimeSuite.h>
 
-#define EXIT_CODE_NO_DEVICE (-1)
+#define EXIT_CODE_CONTROL_C (-3)
+#define EXIT_CODE_NO_DEVICE (-2)
 #define EXIT_CODE_LMS_OPEN  (-1)
 
 #define TX_FREQUENCY    1575420000.0
@@ -19,7 +21,51 @@
 #define TX_BANDWIDTH    5000000.0
 #define DEFAULT_ANTENNA 1 // antenna with BW [30MHz .. 2000MHz]
 
+#define STRINGIFY2(X) #X
+#define STRINGIFY(X) STRINGIFY2(X)
+
+static int control_c_received = 0;
+
+static void control_c_handler (int sig, siginfo_t *siginfo, void *context){
+	control_c_received = 1;
+}
+ 
+static void print_usage(const char *progname){
+	printf("Usage: %s [option] < file" "\n"
+            "\t" "-g <gain> or --gain <gain> with gain in [0.0 .. 1.0] set the so-called normalized RF gain in LimeSDR (default: 1.0 max RF power)" "\n"
+            "\t" "-c <channel> or --channel <channel> with channel either 0 or 1 (default: 0)" "\n"
+            "\t" "-a <antenna> or --antenna <antenna> with antenna in { 0, 1, 2 } (default:" STRINGIFY(DEFAULT_ANTENNA) ")" "\n"
+            "\t" "-i <index> or --index <index> select LimeSDR if multiple devices connected (default: 0)" "\n"
+            "\t" "-b <bits> or --bits <bits> select bit count in IQ sample in { 1, 8, 12, 16 }, (default: 16)"
+            "\t" "-s <samplerate> or --samplerate <samplerate> configure BB sample rate (default: " STRINGIFY(TX_SAMPLERATE) ")" "\n"
+            "\t" "-d <dynamic> --dynamic <dynamic> configure dynamic for the 1-bit mode (default: 2047, max 12-bit signed value supported by LimeSDR)" "\n"
+	    "Example:" "\n"
+	    "\t" "./limeplayer -s 1000000 -b 1 -d 1023 -g 0.1 < ../circle.1b.1M.bin" "\n", progname);
+	exit(0);
+}
+
 int main(int argc, char *const argv[]){
+	struct sigaction control_c;
+
+	memset(&control_c, 0, sizeof(control_c));
+	control_c.sa_sigaction = &control_c_handler;
+ 
+	/* The SA_SIGINFO flag tells sigaction() to use the sa_sigaction field, not sa_handler. */
+	control_c.sa_flags = SA_SIGINFO;
+ 
+	if (sigaction(SIGTERM, &control_c, NULL) < 0) {
+		perror ("sigaction");
+		return(EXIT_CODE_CONTROL_C);
+	}
+	if (sigaction(SIGQUIT, &control_c, NULL) < 0) {
+		perror ("sigaction");
+		return(EXIT_CODE_CONTROL_C);
+	}
+	if (sigaction(SIGINT, &control_c, NULL) < 0) {
+		perror ("sigaction");
+		return(EXIT_CODE_CONTROL_C);
+	}
+
 	int device_count = LMS_GetDeviceList(NULL);
 	if(device_count < 1){
 		return(EXIT_CODE_NO_DEVICE);
@@ -34,11 +80,12 @@ int main(int argc, char *const argv[]){
 	}
 
 	double gain = 1.0;
-	int antenna = DEFAULT_ANTENNA;
-	int channel = 0;
-	int index = 0;
-	int bits = 16;
+	int32_t antenna = DEFAULT_ANTENNA;
+	int32_t channel = 0;
+	int32_t index = 0;
+	int32_t bits = 16;
 	double sampleRate = TX_SAMPLERATE;
+	int32_t dynamic = 2047;
 
     while (1) {
         int option_index = 0;
@@ -49,10 +96,11 @@ int main(int argc, char *const argv[]){
             {"index", required_argument, 0, 'i'},
             {"bits", required_argument, 0, 'b'},
             {"samplerate", required_argument, 0, 's'},
+            {"dynamic", required_argument, 0, 'd'},
             {0,         0,                 0,  0 }
         };
 
-        int c = getopt_long(argc, argv, "g:c:a:i:s:b:", long_options, &option_index);
+        int c = getopt_long(argc, argv, "g:c:a:i:s:b:d:", long_options, &option_index);
         if (c == -1)
         break;
 
@@ -85,6 +133,15 @@ int main(int argc, char *const argv[]){
 	    case 's':
 	    	sampleRate = strtod(optarg, NULL);
 	    break;
+	    case 'd':
+	    	dynamic = strtol(optarg, NULL, 0);
+		if(dynamic > 2047){
+			dynamic = 2047;
+		}
+	    break;
+	    default:
+	    	print_usage(argv[0]);
+		break;
         }
     }
 	// Use correct values
@@ -234,7 +291,7 @@ int main(int argc, char *const argv[]){
 	int loop = 0;
 	if((12 == bits) || (16 == bits)){
 		// File contains interleaved 16-bit IQ values, either with only 12-bit data, or with 16-bit data
-		while(fread(sampleBuffer, sizeof(struct s16iq_sample_s), nSamples, stdin)){
+		while((0 == control_c_received) && fread(sampleBuffer, sizeof(struct s16iq_sample_s), nSamples, stdin)){
 			loop++;
 			if(0 == (loop % 100)){
 				struct timeval tv;
@@ -266,7 +323,7 @@ int main(int argc, char *const argv[]){
 			signed char q;
 		};
 		struct s8iq_sample_s *fileSamples = (struct s8iq_sample_s*)malloc(sizeof(struct s8iq_sample_s) * nSamples);
-		while(fread(fileSamples, sizeof(struct s8iq_sample_s), nSamples, stdin)){
+		while((0 == control_c_received) && fread(fileSamples, sizeof(struct s8iq_sample_s), nSamples, stdin)){
 			loop++;
 			if(0 == (loop % 100)){
 				struct timeval tv;
@@ -296,12 +353,13 @@ int main(int argc, char *const argv[]){
 		int i, j;
 		for (i=0; i<256; i++){
 			for (j=0; j<8; j++){
-				expand_lut[i][j] = ((i>>(7-j))&0x1)?1024:-1024;
+				expand_lut[i][j] = ((i>>(7-j))&0x1)?dynamic:-dynamic;
 			}
 		}
+		printf("1-bit mode: using dynamic=%d" "\n", dynamic);
 		// printf("sizeof(expand_lut[][])=%d, sizeof(expand_lut[0])=%d" "\n", sizeof(expand_lut), sizeof(expand_lut[0]));
 		int8_t *fileBuffer = (int8_t*)malloc(sizeof(int8_t) * nSamples);
-		while(fread(fileBuffer, sizeof(int8_t), nSamples / 4, stdin)){
+		while((0 == control_c_received) && fread(fileBuffer, sizeof(int8_t), nSamples / 4, stdin)){
 			loop++;
 			if(0 == (loop % 100)){
 				struct timeval tv;
@@ -335,6 +393,9 @@ int main(int argc, char *const argv[]){
 	LMS_EnableChannel(device, LMS_CH_TX, channel, false);
 	LMS_Close(device);
 
+	if(control_c_received){
+		return(EXIT_CODE_CONTROL_C);
+	}
 	return(0);
 }
 
