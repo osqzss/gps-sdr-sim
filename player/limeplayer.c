@@ -36,7 +36,7 @@ static void print_usage(const char *progname){
             "\t" "-c <channel> or --channel <channel> with channel either 0 or 1 (default: 0)" "\n"
             "\t" "-a <antenna> or --antenna <antenna> with antenna in { 0, 1, 2 } (default:" STRINGIFY(DEFAULT_ANTENNA) ")" "\n"
             "\t" "-i <index> or --index <index> select LimeSDR if multiple devices connected (default: 0)" "\n"
-            "\t" "-b <bits> or --bits <bits> select bit count in IQ sample in { 1, 8, 12, 16 }, (default: 16)"
+            "\t" "-b <bits> or --bits <bits> select bit count in IQ sample in { 1, 8, 12, 16 }, (default: 16)" "\n"
             "\t" "-s <samplerate> or --samplerate <samplerate> configure BB sample rate (default: " STRINGIFY(TX_SAMPLERATE) ")" "\n"
             "\t" "-d <dynamic> --dynamic <dynamic> configure dynamic for the 1-bit mode (default: 2047, max 12-bit signed value supported by LimeSDR)" "\n"
 	    "Example:" "\n"
