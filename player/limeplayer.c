@@ -304,7 +304,7 @@ int main(int argc, char *const argv[]){
 			if(16 == bits){
 				// Scale down to 12-bit
 				// Quick and dirty, so -1 (0xFFFF) to -15 (0xFFF1) scale down to -1 instead of 0
-				int i;
+				int i = 0;
 				while(i < nSamples){
 					sampleBuffer[i].i >>= 4;
 					sampleBuffer[i].q >>= 4;
