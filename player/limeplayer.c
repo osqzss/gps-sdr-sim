@@ -334,7 +334,7 @@ int main(int argc, char *const argv[]){
 				printf("TX rate:%lf MB/s" "\n", status.linkRate / 1e6);
 			}
 			// Up-Scale to 12-bit
-			int i;
+			int i = 0;
 			while(i < nSamples){
 				sampleBuffer[i].i = (fileSamples[i].i << 4);
 				sampleBuffer[i].q = (fileSamples[i].q << 4);
