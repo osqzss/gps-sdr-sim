@@ -64,7 +64,7 @@ Options:
   -t <date,time>   Scenario start time YYYY/MM/DD,hh:mm:ss
   -T <date,time>   Overwrite TOC and TOE to scenario start time
   -d <duration>    Duration [sec] (dynamic mode max: 300 static mode max: 86400)
-  -o <output>      I/Q sampling data file (default: gpssim.bin)
+  -o <output>      I/Q sampling data file (default: gpssim.bin ; use - for stdout)
   -s <frequency>   Sampling frequency [Hz] (default: 2600000)
   -b <iq_bits>     I/Q data format [1/8/16] (default: 16)
   -i               Disable ionospheric delay for spacecraft scenario
@@ -122,6 +122,9 @@ For UHD supported devices (tested with USRP2 only):
 > gps-sdr-sim-uhd.py -t gpssim.bin -s 2500000 -x 0
 ```
 
+For LimeSDR (in case of 1 Msps 1-bit file, to get full BaseBand dynamic and low RF power):
+
+> limeplayer -s 1000000 -b 1 -d 2047 -g 0.1 < ../circle.1b.1M.bin
 
 ### License
 

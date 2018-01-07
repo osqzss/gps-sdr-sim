@@ -5,7 +5,7 @@ all: gps-sdr-sim
 
 SHELL=/bin/bash
 CC=gcc
-CFLAGS=-O3 -Wall
+CFLAGS=-O3 -Wall -D_FILE_OFFSET_BITS=64
 LDFLAGS=-lm
 
 gps-sdr-sim: gpssim.o
