@@ -124,7 +124,9 @@ For UHD supported devices (tested with USRP2 only):
 
 For LimeSDR (in case of 1 Msps 1-bit file, to get full BaseBand dynamic and low RF power):
 
+```
 > limeplayer -s 1000000 -b 1 -d 2047 -g 0.1 < ../circle.1b.1M.bin
+```
 
 ### License
 
