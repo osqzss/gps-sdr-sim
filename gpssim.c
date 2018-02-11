@@ -1654,6 +1654,7 @@ void usage(void)
 		"  -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)\n"
 		"  -u <user_motion> User motion file (dynamic mode)\n"
 		"  -g <nmea_gga>    NMEA GGA stream (dynamic mode)\n"
+		"  -c <location>    ECEF X,Y,Z in meters (static mode) e.g. 3967283.154,1022538.181,4872414.484\n"
 		"  -l <location>    Lat,Lon,Hgt (static mode) e.g. 35.681298,139.766247,10.0\n"
 		"  -t <date,time>   Scenario start time YYYY/MM/DD,hh:mm:ss\n"
 		"  -T <date,time>   Overwrite TOC and TOE to scenario start time\n"
@@ -1752,7 +1753,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:g:l:o:s:b:T:t:d:iv"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:g:c:l:o:s:b:T:t:d:iv"))!=-1)
 	{
 		switch (result)
 		{
@@ -1767,6 +1768,11 @@ int main(int argc, char *argv[])
 			strcpy(umfile, optarg);
 			nmeaGGA = TRUE;
 			break;
+		case 'c':
+			// Static ECEF coordinates input mode
+			staticLocationMode = TRUE;
+			sscanf(optarg,"%lf,%lf,%lf",&xyz[0][0],&xyz[0][1],&xyz[0][2]);
+			break;
 		case 'l':
 			// Static geodetic coordinates input mode
 			// Added by scateu@gmail.com
@@ -1774,6 +1780,7 @@ int main(int argc, char *argv[])
 			sscanf(optarg,"%lf,%lf,%lf",&llh[0],&llh[1],&llh[2]);
 			llh[0] = llh[0] / R2D; // convert to RAD
 			llh[1] = llh[1] / R2D; // convert to RAD
+			llh2xyz(llh,xyz[0]); // Convert llh to xyz
 			break;
 		case 'o':
 			strcpy(outfile, optarg);
@@ -1905,7 +1912,6 @@ int main(int argc, char *argv[])
 		// Static geodetic coordinates input mode: "-l"
 		// Added by scateu@gmail.com 
 		fprintf(stderr, "Using static location mode.\n");
-		llh2xyz(llh,xyz[0]); // Convert llh to xyz
 
 		numd = iduration;
 	}
