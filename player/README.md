@@ -46,6 +46,7 @@ Build instructions https://github.com/mossmann/hackrf/tree/master/host
 ### Dependecies - lime
 
 LimeSuite https://github.com/myriadrf/LimeSuite
+
 Build instructions http://wiki.myriadrf.org/Lime_Suite
 
 :exclamation: Build not tested.
@@ -53,7 +54,7 @@ Build instructions http://wiki.myriadrf.org/Lime_Suite
 ### Dependecies - ADALM-Pluto
 #### libiio
 
-Use the lates version from Github.
+Use the latest version from Github.
 ```
 $ git clone https://github.com/analogdevicesinc/libiio.git
 $ cd libiio
