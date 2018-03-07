@@ -91,7 +91,7 @@ The user motion can be specified in either dynamic or static mode:
 The TX port of a particular SDR platform is connected to the GPS receiver 
 under test through a DC block and a fixed 50-60dB attenuator.
 
-#### BladeRF
+#### BladeRF:
 
 The simulated GPS signal file, named "gpssim.bin", can be loaded
 into the bladeRF for playback as shown below:
