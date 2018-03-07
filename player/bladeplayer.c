@@ -4,8 +4,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <libbladeRF.h>
+#ifdef _WIN32
 #include "getopt.h"
+#else
+#include <getopt.h>
+#include <unistd.h>
 #include <errno.h>
+#endif
 
 #define TX_FREQUENCY    1575420000
 #define TX_SAMPLERATE   2600000
@@ -20,27 +25,25 @@
 
 #define AMPLITUDE (1000) // Default amplitude for 12-bit I/Q
 
-void usage(void) {
+void usage(void)
+{
     fprintf(stderr, "Usage: bladeplayer [options]\n"
-            "  -f <tx_file>  I/Q sampling data file (required)\n"
-            "  -b <iq_bits>  I/Q data format [1/16] (default: 16)\n"
-            "  -g <tx_vga1>  TX VGA1 gain (default: %d)\n",
-            TX_VGA1);
+        "  -f <tx_file>  I/Q sampling data file (required)\n"
+        "  -b <iq_bits>  I/Q data format [1/16] (default: 16)\n"
+        "  -g <tx_vga1>  TX VGA1 gain (default: %d)\n",
+        TX_VGA1);
 
     return;
 }
-
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     int status;
     char *devstr = NULL;
     struct bladerf *dev = NULL;
 
     FILE *fp;
     int16_t *tx_buffer;
-
-    enum state {
-        INIT, READ_FILE, PAD_TRAILING, DONE
-    };
+    enum state {INIT, READ_FILE, PAD_TRAILING, DONE};
     enum state state = INIT;
 
     int compressed = 0;
@@ -48,7 +51,7 @@ int main(int argc, char *argv[]) {
     size_t samples_read;
     int16_t lut[256][8];
     int16_t amp = AMPLITUDE;
-    uint32_t i, k;
+    uint32_t i,k;
 
     int gain = TX_VGA1;
     int result;
@@ -58,49 +61,55 @@ int main(int argc, char *argv[]) {
     // Empty TX file name
     txfile[0] = 0;
 
-    if (argc < 3) {
+    if (argc<3) {
         usage();
         exit(1);
     }
 
-    while ((result = getopt(argc, argv, "g:b:f:")) != -1) {
-        switch (result) {
-            case 'g':
-                gain = atoi(optarg);
-                if (gain>-4 || gain<-35) {
-                    printf("ERROR: Invalid TX VGA1 gain.\n");
-                    exit(1);
-                }
-                break;
-            case 'b':
-                data_format = atoi(optarg);
-                if (data_format != 1 && data_format != 16) {
-                    printf("ERROR: Invalid I/Q data format.\n");
-                    exit(1);
-                } else if (data_format == 1)
-                    compressed = 1;
-                break;
-            case 'f':
-                strcpy(txfile, optarg);
-                break;
-            case ':':
-            case '?':
-                usage();
+    while ((result=getopt(argc,argv,"g:b:f:"))!=-1)
+    {
+        switch (result)
+        {
+        case 'g':
+            gain = atoi(optarg);
+            if (gain>-4 || gain<-35)
+            {
+                printf("ERROR: Invalid TX VGA1 gain.\n");
                 exit(1);
-            default:
-                break;
+            }
+            break;
+        case 'b':
+            data_format = atoi(optarg);
+            if (data_format!=1 && data_format!=16)
+            {
+                printf("ERROR: Invalid I/Q data format.\n");
+                exit(1);
+            }
+            else if (data_format==1)
+                compressed = 1;
+            break;
+        case 'f':
+            strcpy(txfile, optarg);
+            break;
+        case ':':
+        case '?':
+            usage();
+            exit(1);
+        default:
+            break;
         }
     }
 
     // Open TX file.
-    if (txfile[0] == 0) {
+    if (txfile[0]==0)
+    {
         printf("ERROR: I/Q sampling data file is not specified.\n");
         exit(1);
     }
 
     fp = fopen(txfile, "rb");
 
-    if (fp == NULL) {
+    if (fp==NULL) {
         fprintf(stderr, "ERROR: Failed to open TX file: %s\n", argv[1]);
         exit(1);
     }
@@ -127,7 +136,8 @@ int main(int argc, char *argv[]) {
     if (status != 0) {
         fprintf(stderr, "Failed to set TX sample rate: %s\n", bladerf_strerror(status));
         goto out;
-    } else {
+    }
+    else {
         printf("TX sample rate: %u sps\n", TX_SAMPLERATE);
     }
 
@@ -135,7 +145,8 @@ int main(int argc, char *argv[]) {
     if (status != 0) {
         fprintf(stderr, "Failed to set TX bandwidth: %s\n", bladerf_strerror(status));
         goto out;
-    } else {
+    }
+    else {
         printf("TX bandwidth: %u Hz\n", TX_BANDWIDTH);
     }
 
@@ -143,7 +154,8 @@ int main(int argc, char *argv[]) {
     if (status != 0) {
         fprintf(stderr, "Failed to set TX VGA1 gain: %s\n", bladerf_strerror(status));
         goto out;
-    } else {
+    }
+    else {
         printf("TX VGA1 gain: %d dB\n", gain);
     }
 
@@ -151,7 +163,8 @@ int main(int argc, char *argv[]) {
     if (status != 0) {
         fprintf(stderr, "Failed to set TX VGA2 gain: %s\n", bladerf_strerror(status));
         goto out;
-    } else {
+    }
+    else {
         printf("TX VGA2 gain: %d dB\n", TX_VGA2);
     }
 
@@ -159,7 +172,7 @@ int main(int argc, char *argv[]) {
     printf("Running...\n");
 
     // Allocate a buffer to hold each block of samples to transmit.
-    tx_buffer = (int16_t*) malloc(SAMPLES_PER_BUFFER * 2 * sizeof (int16_t));
+    tx_buffer = (int16_t*)malloc(SAMPLES_PER_BUFFER * 2 * sizeof(int16_t));
 
     if (tx_buffer == NULL) {
         fprintf(stderr, "Failed to allocate TX buffer.\n");
@@ -167,16 +180,17 @@ int main(int argc, char *argv[]) {
     }
 
     // if compressed
-    read_buffer = (uint8_t*) malloc(SAMPLES_PER_BUFFER / 4);
+    read_buffer = (uint8_t*)malloc(SAMPLES_PER_BUFFER / 4);
 
     if (read_buffer == NULL) {
         fprintf(stderr, "Failed to allocate read buffer.\n");
         goto out;
     }
 
-    for (i = 0; i < 256; i++) {
-        for (k = 0; k < 8; k++)
-            lut[i][k] = ((i >> (7 - k))&0x1) ? amp : -amp;
+    for (i=0; i<256; i++)
+    {
+        for (k=0; k<8; k++)
+            lut[i][k] = ((i>>(7-k))&0x1)?amp:-amp;
     }
 
     // Configure the TX module for use with the synchronous interface.
@@ -213,15 +227,16 @@ int main(int argc, char *argv[]) {
         while (buffer_samples_remaining > 0 && status == 0 && state != DONE) {
             size_t samples_populated = 0;
 
-            switch (state) {
+            switch(state) {
                 case INIT:
                 case READ_FILE:
                     // Read from the input file
-                    if (compressed) {
+                    if (compressed)
+                    {
                         int16_t *write_buffer_current = tx_buffer;
 
                         samples_read = fread(read_buffer,
-                                sizeof (uint8_t),
+                                sizeof(uint8_t),
                                 read_samples_remaining,
                                 fp);
 
@@ -229,15 +244,18 @@ int main(int argc, char *argv[]) {
                         buffer_samples_remaining = read_samples_remaining * 4;
 
                         // Expand compressed data into TX buffer
-                        for (i = 0; i < samples_read; i++) {
+                        for (i=0; i<samples_read; i++)
+                        {
                             memcpy(write_buffer_current, lut[read_buffer[i]], 8);
-
+                        
                             // Advance the write buffer pointer
                             write_buffer_current += 8;
                         }
-                    } else {
+                    }
+                    else
+                    {
                         samples_populated = fread(tx_buffer_current,
-                                2 * sizeof (int16_t),
+                                2 * sizeof(int16_t),
                                 buffer_samples_remaining,
                                 fp);
                     }
@@ -245,7 +263,8 @@ int main(int argc, char *argv[]) {
                     // If the end of the file was reached, pad the rest of the buffer and finish.
                     if (feof(fp)) {
                         state = PAD_TRAILING;
-                    }                        // Check for errors
+                    }
+                    // Check for errors
                     else if (ferror(fp)) {
                         status = errno;
                     }
@@ -254,7 +273,7 @@ int main(int argc, char *argv[]) {
 
                 case PAD_TRAILING:
                     // Populate the remainder of the buffer with zeros.
-                    memset(tx_buffer_current, 0, buffer_samples_remaining * 2 * sizeof (uint16_t));
+                    memset(tx_buffer_current, 0, buffer_samples_remaining * 2 * sizeof(uint16_t));
 
                     state = DONE;
                     break;
@@ -265,7 +284,7 @@ int main(int argc, char *argv[]) {
             }
 
             // Advance the buffer pointer.
-            buffer_samples_remaining -= (unsigned int) samples_populated;
+            buffer_samples_remaining -= (unsigned int)samples_populated;
             tx_buffer_current += (2 * samples_populated);
         }
 
@@ -294,5 +313,5 @@ out:
     printf("Closing device...\n");
     bladerf_close(dev);
 
-    return (0);
+    return(0);
 }

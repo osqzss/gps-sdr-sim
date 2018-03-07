@@ -1,72 +1,49 @@
-## Building
+## How to build the player software on Linux
 
-Modified to build on Linux.
+### bladeRF
 
-```
-$ make all
-```
-Will build all players if dependencies are met.
+#### Build and install libbladeRF
 
-### Dependencies - bladeRF
-#### libbladeRF
-```
-$ git clone https://github.com/Nuand/bladeRF.git
-$ cd bladeRF
-$ dpkg-buildpackage -b
-```
-Or Nuand has some build/install instructions including an Ubuntu PPA
-at https://github.com/Nuand/bladeRF/wiki/Getting-Started:-Linux
+https://github.com/Nuand/bladeRF/wiki/Getting-Started:-Linux
 
-#### Build
+#### Build bladeplayer
 
 ```
 $ make bladeplayer
 ```
 
-### Dependecies - hackRF
-#### libhackrf
+### HackRF One
+
+#### Build and install libhackrf
+
+https://github.com/mossmann/hackrf/tree/master/host
+
+#### Build hackplayer
 
 ```
-> git clone https://github.com/mossmann/hackrf.git
-> mkdir hackrf/host/build
-> cd hackrf/host/build
-> cmake ..
-> make
-> sudo make install
-> sudo ldconfig
-```
-Build instructions https://github.com/mossmann/hackrf/tree/master/host
-
-#### Build
-
-```
-> make hackplayer
+$ make hackplayer
 ```
 
-### Dependecies - lime
+### LimeSDR
 
-LimeSuite https://github.com/myriadrf/LimeSuite
+#### Build and install libLimeSuite
 
-Build instructions http://wiki.myriadrf.org/Lime_Suite
+http://wiki.myriadrf.org/Lime_Suite
 
-:exclamation: Build not tested.
+#### Build limeplayer
 
-### Dependecies - ADALM-Pluto
-#### libiio
-
-Use the latest version from Github.
 ```
-$ git clone https://github.com/analogdevicesinc/libiio.git
-$ cd libiio
-$ cmake ./
-$ make all
-$ sudo make install
+$ make limeplayer
 ```
-[How to build it in detail.](https://wiki.analog.com/resources/tools-software/linux-software/libiio)
 
-#### libad9361
+### ADALM-Pluto
 
-Use of the latest Github version mandatory.
+#### Build and install libiio
+
+https://wiki.analog.com/resources/tools-software/linux-software/libiio
+
+#### Build and insatall libad9361
+
 ```
 $ git clone https://github.com/analogdevicesinc/libad9361-iio.git
 $ cd libad9361-iio
@@ -75,7 +52,7 @@ $ make all
 $ sudo make install
 ```
 
-#### Build
+#### Build plutoplayer
 
 ```
 $ make plutoplayer
