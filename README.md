@@ -153,5 +153,5 @@ Default 3.0MHz. Applicable range 1.0MHz to 5.0MHz.
 
 ### License
 
-Copyright &copy; 2015 Takuji Ebinuma  
+Copyright &copy; 2015-2018 Takuji Ebinuma  
 Distributed under the [MIT License](http://www.opensource.org/licenses/mit-license.php).
