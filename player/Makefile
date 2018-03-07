@@ -18,8 +18,8 @@ bladeplayer: bladeplayer.o $(SDR_OBJ) $(COMPAT)
 hackplayer: hackplayer.o $(COMPAT)
 	$(CC) -g -o $@ $^ $(LDFLAGS) $(LIBS) $(shell pkg-config --libs libhackrf)
 
-limeplayer: limeplayer.o $(COMPAT)
-	$(CC) -g -o $@ $^ $(LDFLAGS) $(LIBS) -lLimeSuite
+limeplayer: limeplayer.c
+	gcc -O2 -Wall -o limeplayer limeplayer.c -lLimeSuite
 
 plutoplayer: plutoplayer.o $(COMPAT)
 	$(CC) -g -o $@ $^ $(LDFLAGS) $(LIBS) $(shell pkg-config --libs libiio libad9361)
