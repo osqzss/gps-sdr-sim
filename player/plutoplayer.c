@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
             printf("* Found %s\n", iio_context_info_get_description(info[0]));
             iio_context_info_list_free(info);
         }
-	iio_scan_context_destroy(scan_ctx);        
+    iio_scan_context_destroy(scan_ctx);        
     }    
     
     printf("* Acquiring devices\n");
