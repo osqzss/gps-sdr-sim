@@ -25,8 +25,8 @@ struct stream_cfg {
 static void usage() {
     fprintf(stderr, "Usage: plutoplayer [options]\n"
         "  -t <filename>      Transmit data from file (required)\n"
-        "  -a <attenuation>   Set TX attenuation [dB] (default -20.0)"
-        "  -b <bw>            Set RF bandwidth [MHz] (default 5.0)");
+        "  -a <attenuation>   Set TX attenuation [dB] (default -20.0)\n"
+        "  -b <bw>            Set RF bandwidth [MHz] (default 5.0)\n");
     return;
 }
 
