@@ -38,3 +38,6 @@ gps-sdr-sim-lut
 
 # Temporary files
 *.swp
+
+# Netbeans project folder
+nbproject/*
