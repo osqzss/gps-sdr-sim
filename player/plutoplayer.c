@@ -186,10 +186,6 @@ int main(int argc, char** argv) {
     iio_channel_attr_write_longlong(
         iio_device_find_channel(phydev, "altvoltage1", true)
         , "frequency", txcfg.lo_hz); // Set TX LO frequency
-
-    iio_channel_attr_write_longlong(
-        iio_device_find_channel(phydev, "altvoltage1", true)
-        , "frequency", txcfg.lo_hz); // Set TX LO frequency    
     
     printf("* Initializing streaming channels\n");
     tx0_i = iio_device_find_channel(tx, "voltage0", true);
