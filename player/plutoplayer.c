@@ -215,12 +215,12 @@ int main(int argc, char** argv) {
         , "powerdown", false); // Turn ON TX LO
 
     int32_t ntx = 0;
-    char *ptx_buffer = (char *)iio_buffer_start(tx_buffer);
-    
+    short *ptx_buffer = (short *)iio_buffer_start(tx_buffer);
+
     printf("* Transmit starts...\n");    
     // Keep writing samples while there is more data to send and no failures have occurred.
     while (!feof(fp) && !stop) {
-        fread(ptx_buffer, 1, BUFFER_SIZE,fp);
+        fread(ptx_buffer, sizeof(short), BUFFER_SIZE / sizeof(short),fp);
         // Schedule TX buffer
         ntx = iio_buffer_push(tx_buffer);
         if (ntx < 0) {
