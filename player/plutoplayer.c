@@ -26,7 +26,9 @@ static void usage() {
     fprintf(stderr, "Usage: plutoplayer [options]\n"
         "  -t <filename>      Transmit data from file (required)\n"
         "  -a <attenuation>   Set TX attenuation [dB] (default -20.0)\n"
-        "  -b <bw>            Set RF bandwidth [MHz] (default 5.0)\n");
+        "  -b <bw>            Set RF bandwidth [MHz] (default 5.0)\n"
+        "  -u <uri>           ADALM-Pluto URI\n"
+        "  -n <network>       ADALM-Pluto network IP or hostname (default pluto.local)\n");
     return;
 }
 
@@ -58,7 +60,8 @@ int main(int argc, char** argv) {
     const char* path = NULL;
     struct stream_cfg txcfg;
     FILE *fp = NULL;
-    enum state {INIT, READ_FILE, PAD_TRAILING, DONE};
+    const char *uri = NULL;
+    const char *ip = NULL;
     
     // TX stream default config
     txcfg.bw_hz = MHZ(3.0); // 3.0 MHz RF bandwidth
@@ -74,7 +77,7 @@ int main(int argc, char** argv) {
     struct iio_channel *tx0_q = NULL;
     struct iio_buffer *tx_buffer = NULL;    
     
-    while ((opt = getopt(argc, argv, "t:a:b:")) != EOF) {
+    while ((opt = getopt(argc, argv, "t:a:b:n:u:")) != EOF) {
         switch (opt) {
             case 't':
                 path = optarg;
@@ -88,6 +91,12 @@ int main(int argc, char** argv) {
                 txcfg.bw_hz = MHZ(atof(optarg));
                 if(txcfg.bw_hz > MHZ(5.0)) txcfg.bw_hz = MHZ(5.0);
                 if(txcfg.bw_hz < MHZ(1.0)) txcfg.bw_hz = MHZ(1.0);
+                break;
+            case 'u':
+                uri = optarg;
+                break;
+            case 'n':
+                ip = optarg;
                 break;
             default:
                 printf("Unknown argument '-%c %s'\n", opt, optarg);
@@ -118,7 +127,13 @@ int main(int argc, char** argv) {
     printf("* Acquiring IIO context\n");
     ctx = iio_create_default_context();
     if (ctx == NULL) {
-        ctx = iio_create_network_context("pluto.local");
+        if(ip != NULL) {
+            ctx = iio_create_network_context(ip);
+        } else if (uri != NULL) {
+            ctx = iio_create_context_from_uri(uri);
+        } else {
+            ctx = iio_create_network_context("pluto.local");
+        }
     }
    
     if (ctx == NULL) {
@@ -171,10 +186,6 @@ int main(int argc, char** argv) {
     iio_channel_attr_write_longlong(
         iio_device_find_channel(phydev, "altvoltage1", true)
         , "frequency", txcfg.lo_hz); // Set TX LO frequency
-
-    iio_channel_attr_write_longlong(
-        iio_device_find_channel(phydev, "altvoltage1", true)
-        , "frequency", txcfg.lo_hz); // Set TX LO frequency    
     
     printf("* Initializing streaming channels\n");
     tx0_i = iio_device_find_channel(tx, "voltage0", true);
@@ -204,17 +215,17 @@ int main(int argc, char** argv) {
         , "powerdown", false); // Turn ON TX LO
 
     int32_t ntx = 0;
-    char *ptx_buffer = (char *)iio_buffer_start(tx_buffer);
-    
+    short *ptx_buffer = (short *)iio_buffer_start(tx_buffer);
+
     printf("* Transmit starts...\n");    
     // Keep writing samples while there is more data to send and no failures have occurred.
     while (!feof(fp) && !stop) {
-        fread(ptx_buffer, 1, BUFFER_SIZE,fp);
+        fread(ptx_buffer, sizeof(short), BUFFER_SIZE / sizeof(short),fp);
         // Schedule TX buffer
         ntx = iio_buffer_push(tx_buffer);
         if (ntx < 0) {
             printf("Error pushing buf %d\n", (int) ntx);
-            goto error_exit;
+            break;
         }       
     }
     printf("Done.\n");
