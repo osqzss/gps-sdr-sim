@@ -212,7 +212,7 @@ int main(int argc, char *const argv[]){
     LMS_SetNormalizedGain(device, LMS_CH_TX, channel, gain);
     // Disable all other channels
     LMS_EnableChannel(device, LMS_CH_TX, 1 - channel, false);
-    LMS_EnableChannel(device, LMS_CH_RX, 0, false);
+    LMS_EnableChannel(device, LMS_CH_RX, 0, true); /* LimeSuite bug workaround (needed since LimeSuite git rev 52d6129 - or v18.06.0) */
     LMS_EnableChannel(device, LMS_CH_RX, 1, false);
     // Enable our Tx channel
     LMS_EnableChannel(device, LMS_CH_TX, channel, true);
