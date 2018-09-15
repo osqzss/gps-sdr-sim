@@ -1,5 +1,23 @@
 # GPS-SDR-SIM
 
+## For Kolmostar Users
+
+To build this project, you can simply run
+
+```shell
+make
+```
+
+To use this tool, please run
+
+```shell
+gps-sdr-sim -e brdc0010.14n -l 39.98,116,35,100
+```
+
+We append a customized data format 'KOLMO4'.
+
+## Origin Readme
+
 GPS-SDR-SIM generates GPS baseband signal data streams, which can be converted 
 to RF using software-defined radio (SDR) platforms, such as 
 [ADALM-Pluto](https://wiki.analog.com/university/tools/pluto), [bladeRF](http://nuand.com/), [HackRF](https://github.com/mossmann/hackrf/wiki), and [USRP](http://www.ettus.com/).
