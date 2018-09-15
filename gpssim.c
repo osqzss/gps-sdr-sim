@@ -1740,7 +1740,7 @@ int main(int argc, char *argv[])
 	umfile[0] = 0;
 	strcpy(outfile, "gpssim.bin");
 	samp_freq = 2.6e6;
-	data_format = SC16;
+	data_format = KOLMO4;
 	g0.week = -1; // Invalid start time
 	iduration = USER_MOTION_SIZE;
 	duration = (double)iduration/10.0; // Default duration
@@ -1795,7 +1795,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'b':
 			data_format = atoi(optarg);
-			if (data_format!=SC01 && data_format!=SC08 && data_format!=SC16)
+			if (data_format!=SC01 && data_format!=SC08 && data_format!=SC16 && data_format!=KOLMO4)
 			{
 				fprintf(stderr, "ERROR: Invalid I/Q data format.\n");
 				exit(1);
@@ -2092,6 +2092,15 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 	}
+	else if (data_format==KOLMO4)
+	{
+		iq8_buff = calloc(iq_buff_size/2, 1);
+		if (iq8_buff==NULL)
+		{
+			fprintf(stderr, "ERROR: Faild to allocate compressed 4-bit I/Q buffer.\n");
+			exit(1);
+		}
+	}
 
 	// Open output file
 	// "-" can be used as name for stdout
@@ -2277,9 +2286,20 @@ int main(int argc, char *argv[])
 
 			fwrite(iq8_buff, 1, 2*iq_buff_size, fp);
 		} 
-		else // data_format==SC16
+		else if (data_format==SC16)
 		{
 			fwrite(iq_buff, 2, 2*iq_buff_size, fp);
+		}
+		else if (data_format==KOLMO4)
+		{
+			for (isamp=0; isamp<2*iq_buff_size; isamp++)
+			{
+				if (isamp%4==0)
+					iq8_buff[isamp/4] = 0x00;
+				int fixed_val = ((iq_buff[isamp] >> 10) + 0b10) & 0b11;
+				iq8_buff[isamp/4] += fixed_val <<((isamp%4) * 2);
+			}
+			fwrite(iq8_buff, 1, iq_buff_size/2, fp);
 		}
 
 		//
