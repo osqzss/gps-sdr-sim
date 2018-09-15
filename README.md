@@ -11,10 +11,10 @@ make
 To use this tool, please run
 
 ```shell
-gps-sdr-sim -e brdc0010.14n -l 39.98,116,35,100
+./gps-sdr-sim -e /your/navigation/file/path/brdc2560.18n  -l 39.98,116.35,50 -o data_capture_interval_0__.bin -d 30 -s 4092000
 ```
 
-We append a customized data format 'KOLMO4'.
+We append add an option 'KOLMO4' for the origin project's options 'iq_bits'.
 
 ## Origin Readme
 
