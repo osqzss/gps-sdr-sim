@@ -2296,6 +2296,17 @@ int main(int argc, char *argv[])
 			{
 				if (isamp%4==0)
 					iq8_buff[isamp/4] = 0x00;
+				///
+				/// Signal convert
+				/// 1. 12bits -> 2bits
+				/// 2. 2bits value reflect
+				/// 00 -> 10
+				/// 01 -> 11
+				/// 10 -> 00
+				/// 11 -> 01
+				/// 
+				/// Therefore, we should convert the signal as 
+				/// x -> (x>>10 + 0b10) & 0b11
 				int fixed_val = ((iq_buff[isamp] >> 10) + 0b10) & 0b11;
 				iq8_buff[isamp/4] += fixed_val <<((isamp%4) * 2);
 			}
