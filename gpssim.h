@@ -3,8 +3,8 @@
 
 #define FLOAT_CARR_PHASE // For RKT simulation. Higher computational load, but smoother carrier phase.
 
-#define TRUE	(1)
-#define FALSE	(0)
+#define TRUE (1)
+#define FALSE (0)
 
 /*! \brief Maximum length of a line in a text file (RINEX, motion) */
 #define MAX_CHAR (100)
@@ -28,7 +28,7 @@
 #define N_DWRD_SBF (10) // 10 word per subframe
 
 /*! \brief Number of words */
-#define N_DWRD ((N_SBF+1)*N_DWRD_SBF) // Subframe word buffer size
+#define N_DWRD ((N_SBF + 1) * N_DWRD_SBF) // Subframe word buffer size
 
 /*! \brief C/A code sequence length */
 #define CA_SEQ_LEN (1023)
@@ -39,7 +39,7 @@
 #define SECONDS_IN_HOUR 3600.0
 #define SECONDS_IN_MINUTE 60.0
 
-#define POW2_M5  0.03125
+#define POW2_M5 0.03125
 #define POW2_M19 1.907348632812500e-6
 #define POW2_M29 1.862645149230957e-9
 #define POW2_M31 4.656612873077393e-10
@@ -57,7 +57,7 @@
 #define OMEGA_EARTH 7.2921151467e-5
 #define PI 3.1415926535898
 
-#define WGS84_RADIUS	6378137.0
+#define WGS84_RADIUS 6378137.0
 #define WGS84_ECCENTRICITY 0.0818191908426
 
 #define R2D 57.2957795131
@@ -69,43 +69,44 @@
 #define CARR_FREQ (1575.42e6)
 /*! \brief C/A code frequency */
 #define CODE_FREQ (1.023e6)
-#define CARR_TO_CODE (1.0/1540.0)
+#define CARR_TO_CODE (1.0 / 1540.0)
 
 // Sampling data format
 #define SC01 (1)
 #define SC08 (8)
 #define SC16 (16)
+#define KOLMO4 (4)
 
 #define EPHEM_ARRAY_SIZE (13) // for daily GPS broadcast ephemers file (brdc)
 
 /*! \brief Structure representing GPS time */
 typedef struct
 {
-	int week;	/*!< GPS week number (since January 1980) */
-	double sec; 	/*!< second inside the GPS \a week */
+	int week;   /*!< GPS week number (since January 1980) */
+	double sec; /*!< second inside the GPS \a week */
 } gpstime_t;
 
 /*! \brief Structure repreenting UTC time */
 typedef struct
 {
-	int y; 		/*!< Calendar year */
+	int y;		/*!< Calendar year */
 	int m;		/*!< Calendar month */
 	int d;		/*!< Calendar day */
 	int hh;		/*!< Calendar hour */
 	int mm;		/*!< Calendar minutes */
-	double sec;	/*!< Calendar seconds */
+	double sec; /*!< Calendar seconds */
 } datetime_t;
 
 /*! \brief Structure representing ephemeris of a single satellite */
 typedef struct
 {
-	int vflg;	/*!< Valid Flag */
+	int vflg; /*!< Valid Flag */
 	datetime_t t;
-	gpstime_t toc;	/*!< Time of Clock */
-	gpstime_t toe;	/*!< Time of Ephemeris */
-	int iodc;	/*!< Issue of Data, Clock */
-	int iode;	/*!< Isuse of Data, Ephemeris */
-	double deltan;	/*!< Delta-N (radians/sec) */
+	gpstime_t toc; /*!< Time of Clock */
+	gpstime_t toe; /*!< Time of Ephemeris */
+	int iodc;	  /*!< Issue of Data, Clock */
+	int iode;	  /*!< Isuse of Data, Ephemeris */
+	double deltan; /*!< Delta-N (radians/sec) */
 	double cuc;	/*!< Cuc (radians) */
 	double cus;	/*!< Cus (radians) */
 	double cic;	/*!< Correction to inclination cos (radians) */
@@ -113,13 +114,13 @@ typedef struct
 	double crc;	/*!< Correction to radius cos (meters) */
 	double crs;	/*!< Correction to radius sin (meters) */
 	double ecc;	/*!< e Eccentricity */
-	double sqrta;	/*!< sqrt(A) (sqrt(m)) */
-	double m0;	/*!< Mean anamoly (radians) */
-	double omg0;	/*!< Longitude of the ascending node (radians) */
-	double inc0;	/*!< Inclination (radians) */
+	double sqrta;  /*!< sqrt(A) (sqrt(m)) */
+	double m0;	 /*!< Mean anamoly (radians) */
+	double omg0;   /*!< Longitude of the ascending node (radians) */
+	double inc0;   /*!< Inclination (radians) */
 	double aop;
-	double omgdot;	/*!< Omega dot (radians/s) */
-	double idot;	/*!< IDOT (radians/s) */
+	double omgdot; /*!< Omega dot (radians/s) */
+	double idot;   /*!< IDOT (radians/s) */
 	double af0;	/*!< Clock offset (seconds) */
 	double af1;	/*!< rate (sec/sec) */
 	double af2;	/*!< acceleration (sec/sec^2) */
@@ -127,9 +128,9 @@ typedef struct
 	int svhlth;
 	int codeL2;
 	// Working variables follow
-	double n; 	/*!< Mean motion (Average angular velocity) */
-	double sq1e2;	/*!< sqrt(1-e^2) */
-	double A;	/*!< Semi-major axis */
+	double n;		/*!< Mean motion (Average angular velocity) */
+	double sq1e2;   /*!< sqrt(1-e^2) */
+	double A;		/*!< Semi-major axis */
 	double omgkdot; /*!< OmegaDot-OmegaEdot */
 } ephem_t;
 
@@ -137,11 +138,11 @@ typedef struct
 {
 	int enable;
 	int vflg;
-	double alpha0,alpha1,alpha2,alpha3;
-	double beta0,beta1,beta2,beta3;
-	double A0,A1;
-	int dtls,tot,wnt;
-	int dtlsf,dn,wnlsf;
+	double alpha0, alpha1, alpha2, alpha3;
+	double beta0, beta1, beta2, beta3;
+	double A0, A1;
+	int dtls, tot, wnt;
+	int dtlsf, dn, wnlsf;
 } ionoutc_t;
 
 typedef struct
@@ -157,25 +158,25 @@ typedef struct
 /*! \brief Structure representing a Channel */
 typedef struct
 {
-	int prn;	/*< PRN Number */
+	int prn;			/*< PRN Number */
 	int ca[CA_SEQ_LEN]; /*< C/A Sequence */
-	double f_carr;	/*< Carrier frequency */
-	double f_code;	/*< Code frequency */
+	double f_carr;		/*< Carrier frequency */
+	double f_code;		/*< Code frequency */
 #ifdef FLOAT_CARR_PHASE
 	double carr_phase;
 #else
 	unsigned int carr_phase; /*< Carrier phase */
-	int carr_phasestep;	/*< Carrier phasestep */
+	int carr_phasestep;		 /*< Carrier phasestep */
 #endif
-	double code_phase; /*< Code phase */
-	gpstime_t g0;	/*!< GPS time at start */
+	double code_phase;				  /*< Code phase */
+	gpstime_t g0;					  /*!< GPS time at start */
 	unsigned long sbf[5][N_DWRD_SBF]; /*!< current subframe */
-	unsigned long dwrd[N_DWRD]; /*!< Data words of sub-frame */
-	int iword;	/*!< initial word */
-	int ibit;	/*!< initial bit */
-	int icode;	/*!< initial code */
-	int dataBit;	/*!< current data bit */
-	int codeCA;	/*!< current C/A code */
+	unsigned long dwrd[N_DWRD];		  /*!< Data words of sub-frame */
+	int iword;						  /*!< initial word */
+	int ibit;						  /*!< initial bit */
+	int icode;						  /*!< initial code */
+	int dataBit;					  /*!< current data bit */
+	int codeCA;						  /*!< current C/A code */
 	double azel[2];
 	range_t rho0;
 } channel_t;

@@ -1,4 +1,67 @@
-# GPS-SDR-SIM
+# Cumstomized GPS-SDR-SIM For Kolmostar Users
+
+This repo is forked from [osqzss/gps-sdr-sim](https://github.com/osqzss/gps-sdr-sim) and customized for Kolmostar users' usage. It takes GPS navigation data as input and generate GPS baseband data streams in Kolmostar's 4-bits format.
+
+## Quick Start For Kolmostar Users
+
+In this section you'll see how a Kolmostar user shold use this tool step by step.
+
+### Download Navigation Data
+
+You can download and uncompress navigation data from NASA's ftp by executing the following command. Please change '2018' to the year you want and '001' to day of year.
+
+```shell
+wget ftp://cddis.gsfc.nasa.gov/pub/gps/data/daily/2018/brdc/brdc0010.18n.Z
+zcat brdc0010.18n.Z > brdc0010.18n
+```
+
+### Build Code
+
+To build this project, please run
+
+```shell
+gcc gpssim.c -lm -O3 -o gps-sdr-sim
+```
+
+### Generate Signal
+
+To use this tool, please run
+
+```shell
+./gps-sdr-sim -e brdc0010.18n  -l 39.98,116.35,50 -o data_capture_interval_0__.bin -d 30 -s 4092000 -b 4
+```
+
+Explanation for arguments:
+
+- -e: RINEX navigation file for GPS ephemerides (required)
+- -l: Lattitude, longitude and height for the location where your want to simulate.
+- -o: Output file path. Use format 'data_capture_interval_xx__.bin' and file name so that is can be recognized by simple-scan.
+- -d: Duration of simulation in seconds. As the output file grows fast, we strongly recommend you not to choose a number that is too large.
+- -s: Frequency(Hz) of signal. 1M in simple-scan is not 1024*1024 or 1000000, as usual, but 1023000 actually. Thus we have two valid values for simple-scan's gps_4M_32M_DataManager: 4092000 for 4M and 32736000 for 32M.
+- -b: I/Q data format. We have four valid options '1', '4', '8', '16'. Option '4', which is the default value, stands for Kolmo format(2bits I and 2 bits Q).
+
+To learn more about all the arguments, please run
+
+```shell
+./gps-sdr-sim -h
+```
+
+### Simple-Scan Output
+
+The output file 'data_capture_interval_0__.bin' can now be recoginized by simple-scan. Personal suggestion is to change simple-scan's parameter 'dbhz_thresh' to 40, since the noise's signal strength can easily reach 38dbHz or higher.
+
+## Signal Convert
+
+Signal representations for I/Q data are different between GPS-SDR-SIM and simple-scan. GPS-SDR-SIM uses 12-bits unsigned number while simple-scan uses 2bits unsigned number. Therefore we can get the  reflection rules to convert signal from GPS-SDR-SIM to simple-scan
+
+- 0xFFF~0xC00 => 01
+- 0xBFF~0x800 => 00
+- 0x7FF~0x400 => 11
+- 0x3FF~0x000 => 10
+
+====================================================
+
+# Original Readme
 
 GPS-SDR-SIM generates GPS baseband signal data streams, which can be converted 
 to RF using software-defined radio (SDR) platforms, such as 
@@ -67,7 +130,7 @@ Options:
   -d <duration>    Duration [sec] (dynamic mode max: 300 static mode max: 86400)
   -o <output>      I/Q sampling data file (default: gpssim.bin ; use - for stdout)
   -s <frequency>   Sampling frequency [Hz] (default: 2600000)
-  -b <iq_bits>     I/Q data format [1/8/16] (default: 16)
+  -b <iq_bits>     I/Q data format [1/4/8/16] (default: 4 which is Kolmo format)
   -i               Disable ionospheric delay for spacecraft scenario
   -v               Show details about simulated channels
 ```
