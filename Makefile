@@ -18,3 +18,9 @@ time: gps-sdr-sim
 	time ./gps-sdr-sim -e brdc3540.14n -u circle.csv -b 1
 	time ./gps-sdr-sim -e brdc3540.14n -u circle.csv -b 8
 	time ./gps-sdr-sim -e brdc3540.14n -u circle.csv -b 16
+
+YEAR?=$(shell date +"%Y")
+Y=$(patsubst 20%,%,$(YEAR))
+%.$(Y)n:
+	wget -q ftp://cddis.gsfc.nasa.gov/gnss/data/daily/$(YEAR)/brdc/$@.Z -O $@.Z
+	uncompress $@.Z
