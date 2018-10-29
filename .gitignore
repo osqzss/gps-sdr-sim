@@ -41,3 +41,6 @@ gps-sdr-sim-lut
 
 # Netbeans project folder
 nbproject/*
+
+# Last used USER_MOTION_SIZE variable
+.user-motion-size
