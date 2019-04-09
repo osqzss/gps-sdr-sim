@@ -1850,9 +1850,11 @@ int main(int argc, char *argv[])
 			sscanf(optarg,"%hd",&port);
 			
 			usesocket=true;
+			break;
 		case  'w':
 			staticLocationMode = TRUE;
 			webflag=1;
+			break;
 			
 		default:
 			break;
