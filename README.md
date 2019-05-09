@@ -36,11 +36,9 @@ cd into /mapserver, and run
 python mapper.py
 ```
 
-Then visit http://127.0.0.1:8080/static/baidumap.html to use the baidu Online map.
+Then visit http://127.0.0.1:8080/static/googlemap.html to use the google Online map.
 
-
-
-Actually I don't want to use BaiduMap.. But because of the GFW, I can't access Google..
+Since Baidu map uses the GCJ02 coordinate system, the coordinates shown on the map http://127.0.0.1:8080/static/googlemap.html deviate from the actual position.
 
 You can write an map which can POST data to http://127.0.0.1:8080/post like this
 
