@@ -14,7 +14,7 @@ LDFLAGS=-lm
 gps-sdr-sim: gpssim.o
 	${CC} $< ${LDFLAGS} -o $@
 
-gpssim.o: .user-motion-size
+gpssim.o: .user-motion-size gpssim.h
 
 .user-motion-size: .FORCE
 	@if [ -f .user-motion-size ]; then \
