@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # a small script to transmit simulated GPS samples via UHD
 # (C) 2015 by Harald Welte <laforge@gnumonks.org>
 # Licensed under the MIT License (see LICENSE)
@@ -20,7 +20,7 @@ class top_block(gr.top_block):
         ##################################################
         # Blocks
         ##################################################
-        self.uhd_usrp_sink = uhd.usrp_sink(options.args, uhd.io_type_t.COMPLEX_FLOAT32, 1)
+        self.uhd_usrp_sink = uhd.usrp_sink(options.args, uhd.stream_args(cpu_format="fc32"))
         self.uhd_usrp_sink.set_samp_rate(options.sample_rate)
         self.uhd_usrp_sink.set_center_freq(options.frequency, 0)
         self.uhd_usrp_sink.set_gain(options.gain, 0)
@@ -81,7 +81,7 @@ def get_options():
     (options, args) = parser.parse_args()
     if len(args) != 0:
         parser.print_help()
-        raise SystemExit, 1
+        raise SystemExit(1)
 
     return (options)
 
@@ -89,6 +89,6 @@ if __name__ == '__main__':
     (options) = get_options()
     tb = top_block(options)
     tb.start()
-    raw_input('Press Enter to quit: ')
+    input('Press Enter to quit: ')
     tb.stop()
     tb.wait()
