@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/shm.h>
-
+#include <sys/time.h>
 
 
 
@@ -57,10 +57,10 @@ int udpinit(short port){
 }
 int udprecv(int s,void *dataa,int siz){
 	struct sockaddr from;
-	return recvfrom(s, dataa, siz, 0,&from,sizeof(from));
+	return recvfrom(s, dataa, siz, 0,&from,0);
 }
 
-double llhr[3]={39.68,139,76,10};
+double llhr[3]={39.68,139,76};
 
 void threadrecv(){
 	printf("listing\n");

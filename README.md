@@ -15,7 +15,7 @@ to RF using software-defined radio (SDR) platforms, such as
 ### Building with GCC
 
 ```
-$ gcc gpssim.c -lm -O3 -o gps-sdr-sim
+$ gcc gpssim.c -lm -lpthread -O3 -o gps-sdr-sim
 ```
 
 ### Realtime by Gnuradio

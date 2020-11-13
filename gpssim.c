@@ -1661,10 +1661,10 @@ void usage(void)
 		"  -s <frequency>   Sampling frequency [Hz] (default: 2600000)\n"
 		"  -b <iq_bits>     I/Q data format [1/8/16] (default: 16)\n"
 		"  -i               Disable ionospheric delay for spacecraft scenario\n"
-		"  -v               Show details about simulated channels\n",
-		"  -n <port>        Use TCP connect to Gnuradio TCP-Source for\n realtime simulation.\n",
+		"  -v               Show details about simulated channels\n"
+		"  -n <port>        Use TCP connect to Gnuradio TCP-Source for\n realtime simulation.\n"
 		"-w               Connect with map server(/mapserver/mapper.py) by udp on port 5678.\n",
-		(USER_MOTION_SIZE)/10.0,STATIC_MAX_DURATION);
+		(double)((USER_MOTION_SIZE)/10.0),(int)STATIC_MAX_DURATION);
 
 	return;
 }
@@ -1850,9 +1850,11 @@ int main(int argc, char *argv[])
 			sscanf(optarg,"%hd",&port);
 			
 			usesocket=true;
+			break;
 		case  'w':
 			staticLocationMode = TRUE;
 			webflag=1;
+			break;
 			
 		default:
 			break;
