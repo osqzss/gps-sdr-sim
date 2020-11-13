@@ -4,7 +4,7 @@ import socket
 import struct
 import time
 import web
-HOST = '127.0.0.1'    
+HOST = 'localhost'    
 PORT = 5678            
 BUFFSIZE = 1024          
 ADDR = ( HOST, PORT )   
