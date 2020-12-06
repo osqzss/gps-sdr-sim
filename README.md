@@ -43,9 +43,9 @@ The user is also able to assign a static location directly through the command l
 
 The user specifies the GPS satellite constellation through a GPS broadcast 
 ephemeris file. The daily GPS broadcast ephemeris file (brdc) is a merge of the
-individual site navigation files into one. The archive for the daily file is:
-
-[ftp://cddis.gsfc.nasa.gov/gnss/data/daily/](ftp://cddis.gsfc.nasa.gov/gnss/data/daily/)
+individual site navigation files into one. The archive for the daily file can 
+be downloaded from: https://cddis.nasa.gov/archive/gnss/data/daily/. Access 
+to this site requires registration, which is free.
 
 These files are then used to generate the simulated pseudorange and
 Doppler for the GPS satellites in view. This simulated range data is 
