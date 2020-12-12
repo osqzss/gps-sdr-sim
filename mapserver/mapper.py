@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-from http.server import SimpleHTTPRequestHandler, HTTPServer
-from urllib.parse import parse_qs
+import tornado.ioloop
+import tornado.web
+from tornado.web import RequestHandler, StaticFileHandler
 import socket
 import struct
 import time
@@ -13,32 +14,31 @@ PORT = 5678
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
-class MapHandler(SimpleHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
-        directory = os.path.dirname(__file__)
-        super().__init__(*args, directory=directory, **kwargs)
+class IndexHandler(RequestHandler):
+    def get(self):
+        self.redirect('/static/baidumap.html')
 
-    def do_GET(self):
-        if self.path == '/':
-            self.send_response(301)
-            self.send_header('Location', '/static/baidumap.html')
-            self.end_headers()
-        else:
-            super(MapHandler, self).do_GET()
 
-    def do_POST(self):
-        if self.path == '/post':
-            urlencoded = self.rfile.read(int(self.headers['Content-Length']))
-            parsed = parse_qs(urlencoded)
-            pos = [float(parsed.get(k)[0]) for k in [b'lon', b'lat', b'hgt']]
-            data = struct.pack('ddd', *pos)
-            sock.sendto(data, (HOST, PORT))
-            print(*pos)
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/plain')
-        else:
-            self.send_response(404)
-        self.end_headers()
+class PostHandler(RequestHandler):
+    def post(self):
+        self.set_header('Content-Type', 'text/plain')
+        pos = [
+            float(self.get_body_argument(k)) for k in ['lon', 'lat', 'hgt']
+        ]
+        data = struct.pack('ddd', *pos)
+        sock.sendto(data, (HOST, PORT))
+        print(*pos)
+        self.write('OK')
+
+
+def make_app():
+    return tornado.web.Application([
+        (r'/', IndexHandler),
+        (r'/post', PostHandler),
+        (r'/static/(.*)', StaticFileHandler, {
+            'path': os.path.dirname(__file__)
+        })
+    ])
 
 
 if __name__ == "__main__":
@@ -56,6 +56,7 @@ if __name__ == "__main__":
         help='specify host map server to bind [default: 0.0.0.0]')
     args = argp.parse_args()
 
-    httpd = HTTPServer((args.host, args.port), MapHandler)
+    app = make_app()
     print('Serving at http://{}:{}'.format(args.host, args.port))
-    httpd.serve_forever()
+    app.listen(args.port, args.host)
+    tornado.ioloop.IOLoop.current().start()
