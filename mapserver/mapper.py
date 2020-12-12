@@ -23,7 +23,7 @@ class PostHandler(RequestHandler):
     def post(self):
         self.set_header('Content-Type', 'text/plain')
         pos = [
-            float(self.get_body_argument(k)) for k in ['lon', 'lat', 'hgt']
+            float(self.get_body_argument(k)) for k in ['lat', 'lon', 'hgt']
         ]
         data = struct.pack('ddd', *pos)
         sock.sendto(data, (HOST, PORT))
