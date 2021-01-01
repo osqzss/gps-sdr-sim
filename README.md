@@ -52,6 +52,7 @@ the following entry to one's netrc file (filling in the appropriate values
 for username and password):
 ```bash
 echo machine urs.earthdata.nasa.gov login <your username> password <your password> >> ~/.netrc
+chmod 600 ~/.netrc
 ```
 
 and then including the following code (or similar) in a script:
