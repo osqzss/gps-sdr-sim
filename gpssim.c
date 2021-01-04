@@ -94,8 +94,8 @@ int allocatedSat[MAX_SAT];
 
 /*! \brief Subtract two vectors of double
  *  \param[out] y Result of subtraction
- *  \param[in] x1 Minuend of subtracion
- *  \param[in] x2 Subtrahend of subtracion
+ *  \param[in] x1 Minuend of subtraction
+ *  \param[in] x2 Subtrahend of subtraction
  */
 void subVect(double *y, const double *x1, const double *x2)
 {
@@ -126,7 +126,7 @@ double dotProd(const double *x1, const double *x2)
 }
 
 /* !\brief generate the C/A code sequence for a given Satellite Vehicle PRN
- *  \param[in] prn PRN nuber of the Satellite Vehicle
+ *  \param[in] prn PRN number of the Satellite Vehicle
  *  \param[out] ca Caller-allocated integer array of 1023 bytes
  */
 void codegen(int *ca, int prn)
@@ -218,7 +218,7 @@ void gps2date(const gpstime_t *g, datetime_t *t)
 	return;
 }
 
-/*! \brief Convert Earth-centered Earth-fixed (ECEF) into Lat/Long/Heighth
+/*! \brief Convert Earth-centered Earth-fixed (ECEF) into Lat/Long/Height
  *  \param[in] xyz Input Array of X, Y and Z ECEF coordinates
  *  \param[out] llh Output Array of Latitude, Longitude and Height
  */
@@ -351,7 +351,7 @@ void ecef2neu(const double *xyz, double t[3][3], double *neu)
 	return;
 }
 
-/*! \brief Convert North-Eeast-Up to Azimuth + Elevation
+/*! \brief Convert North-East-Up to Azimuth + Elevation
  *  \param[in] neu Input position in North-East-Up format
  *  \param[out] azel Output array of azimuth + elevation as double
  */
@@ -373,7 +373,7 @@ void neu2azel(double *azel, const double *neu)
  *  \param[in] eph Ephemeris data of the satellite
  *  \param[in] g GPS time at which position is to be computed
  *  \param[out] pos Computed position (vector)
- *  \param[out] vel Computed velociy (vector)
+ *  \param[out] vel Computed velocity (vector)
  *  \param[clk] clk Computed clock
  */
 void satpos(ephem_t eph, gpstime_t g, double *pos, double *vel, double *clk)
@@ -665,7 +665,7 @@ void eph2sbf(const ephem_t eph, const ionoutc_t ionoutc, unsigned long sbf[5][N_
 }
 
 /*! \brief Count number of bits set to 1
- *  \param[in] v long word in whihc bits are counted
+ *  \param[in] v long word in which bits are counted
  *  \returns Count of bits set to 1
  */
 unsigned long countBits(unsigned long v)
@@ -728,7 +728,7 @@ unsigned long computeChecksum(unsigned long source, int nib)
 	if (nib) // Non-information bearing bits for word 2 and 10
 	{
 		/*
-		Solve bits 23 and 24 to presearve parity check
+		Solve bits 23 and 24 to preserve parity check
 		with zeros in bits 29 and 30.
 		*/
 
@@ -810,7 +810,7 @@ gpstime_t incGpsTime(gpstime_t g0, double dt)
 	return(g1);
 }
 
-/*! \brief Read Ephemersi data from the RINEX Navigation file */
+/*! \brief Read Ephemeris data from the RINEX Navigation file */
 /*  \param[out] eph Array of Output SV ephemeris data
  *  \param[in] fname File name of the RINEX file
  *  \returns Number of sets of ephemerides in the file
@@ -1727,7 +1727,7 @@ int main(int argc, char *argv[])
 	int iduration;
 	int verb;
 
-	int timeoverwrite = FALSE; // Overwirte the TOC and TOE in the RINEX file
+	int timeoverwrite = FALSE; // Overwrite the TOC and TOE in the RINEX file
 
 	ionoutc_t ionoutc;
 
@@ -2070,7 +2070,7 @@ int main(int argc, char *argv[])
 
 	if (iq_buff==NULL)
 	{
-		fprintf(stderr, "ERROR: Faild to allocate 16-bit I/Q buffer.\n");
+		fprintf(stderr, "ERROR: Failed to allocate 16-bit I/Q buffer.\n");
 		exit(1);
 	}
 
@@ -2079,7 +2079,7 @@ int main(int argc, char *argv[])
 		iq8_buff = calloc(2*iq_buff_size, 1);
 		if (iq8_buff==NULL)
 		{
-			fprintf(stderr, "ERROR: Faild to allocate 8-bit I/Q buffer.\n");
+			fprintf(stderr, "ERROR: Failed to allocate 8-bit I/Q buffer.\n");
 			exit(1);
 		}
 	}
@@ -2088,7 +2088,7 @@ int main(int argc, char *argv[])
 		iq8_buff = calloc(iq_buff_size/4, 1); // byte = {I0, Q0, I1, Q1, I2, Q2, I3, Q3}
 		if (iq8_buff==NULL)
 		{
-			fprintf(stderr, "ERROR: Faild to allocate compressed 1-bit I/Q buffer.\n");
+			fprintf(stderr, "ERROR: Failed to allocate compressed 1-bit I/Q buffer.\n");
 			exit(1);
 		}
 	}
@@ -2232,7 +2232,7 @@ int main(int argc, char *argv[])
 						}
 					}
 
-					// Set currnt code chip
+					// Set current code chip
 					chan[i].codeCA = chan[i].ca[(int)chan[i].code_phase]*2-1;
 
 					// Update carrier phase
@@ -2326,7 +2326,7 @@ int main(int argc, char *argv[])
 			else
 				allocateChannel(chan, eph[ieph], ionoutc, grx, xyz[0], elvmask);
 
-			// Show ditails about simulated channels
+			// Show details about simulated channels
 			if (verb==TRUE)
 			{
 				fprintf(stderr, "\n");
