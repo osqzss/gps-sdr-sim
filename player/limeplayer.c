@@ -219,7 +219,7 @@ int main(int argc, char *const argv[]){
         LPFBW = LPFBWRange.min;
     }
     if(LPFBW > LPFBWRange.max){
-        LPFBW = LPFBWRange.min;
+        LPFBW = LPFBWRange.min; //TODO IS THIS INTENDED?
     }
     int setLPFBW = LMS_SetLPFBW(device, LMS_CH_TX, channel, LPFBW);
     if(setLPFBW){
