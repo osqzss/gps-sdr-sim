@@ -1865,7 +1865,9 @@ int main(int argc, char *argv[])
 		llh[2] = 10.0;
 	}
 
-	if (duration<0.0 || (duration>((double)USER_MOTION_SIZE)/10.0 && !staticLocationMode) || (duration>STATIC_MAX_DURATION && staticLocationMode))
+	if (duration<0.0
+			|| (duration>((double)USER_MOTION_SIZE)/10.0 && !staticLocationMode)
+			|| (duration>STATIC_MAX_DURATION && staticLocationMode))
 	{
 		fprintf(stderr, "ERROR: Invalid duration.\n");
 		exit(1);
@@ -1891,12 +1893,7 @@ int main(int argc, char *argv[])
 		else
 			numd = readUserMotion(xyz, umfile);
 
-		if (numd==-1)
-		{
-			fprintf(stderr, "ERROR: Failed to open user motion / NMEA GGA file.\n");
-			exit(1);
-		}
-		else if (numd==0)
+		if (numd<=0)
 		{
 			fprintf(stderr, "ERROR: Failed to read user motion / NMEA GGA data.\n");
 			exit(1);
