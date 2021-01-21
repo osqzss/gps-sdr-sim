@@ -1673,7 +1673,7 @@ int main(int argc, char *argv[])
 {
 	clock_t tstart,tend;
 
-	FILE *fp;
+	FILE *fp = NULL;
 
 	int sv;
 	int neph,ieph;
