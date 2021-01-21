@@ -78,7 +78,7 @@
 #define SC08 (8)
 #define SC16 (16)
 
-#define EPHEM_ARRAY_SIZE (13) // for daily GPS broadcast ephemers file (brdc)
+#define EPHEM_ARRAY_SIZE (13) // for daily GPS broadcast ephemeris file (brdc)
 
 /*! \brief Structure representing GPS time */
 typedef struct
@@ -87,7 +87,7 @@ typedef struct
 	double sec; 	/*!< second inside the GPS \a week */
 } gpstime_t;
 
-/*! \brief Structure repreenting UTC time */
+/*! \brief Structure representing UTC time */
 typedef struct
 {
 	int y; 		/*!< Calendar year */
@@ -106,7 +106,7 @@ typedef struct
 	gpstime_t toc;	/*!< Time of Clock */
 	gpstime_t toe;	/*!< Time of Ephemeris */
 	int iodc;	/*!< Issue of Data, Clock */
-	int iode;	/*!< Isuse of Data, Ephemeris */
+	int iode;	/*!< Issue of Data, Ephemeris */
 	double deltan;	/*!< Delta-N (radians/sec) */
 	double cuc;	/*!< Cuc (radians) */
 	double cus;	/*!< Cus (radians) */
@@ -116,15 +116,15 @@ typedef struct
 	double crs;	/*!< Correction to radius sin (meters) */
 	double ecc;	/*!< e Eccentricity */
 	double sqrta;	/*!< sqrt(A) (sqrt(m)) */
-	double m0;	/*!< Mean anamoly (radians) */
+	double m0;	/*!< Mean anomaly (radians) */
 	double omg0;	/*!< Longitude of the ascending node (radians) */
 	double inc0;	/*!< Inclination (radians) */
 	double aop;
 	double omgdot;	/*!< Omega dot (radians/s) */
 	double idot;	/*!< IDOT (radians/s) */
 	double af0;	/*!< Clock offset (seconds) */
-	double af1;	/*!< rate (sec/sec) */
-	double af2;	/*!< acceleration (sec/sec^2) */
+	double af1;	/*!< Rate (sec/sec) */
+	double af2;	/*!< Acceleration (sec/sec^2) */
 	double tgd;	/*!< Group delay L2 bias */
 	int svhlth;
 	int codeL2;
@@ -171,13 +171,13 @@ typedef struct
 #endif
 	double code_phase; /*< Code phase */
 	gpstime_t g0;	/*!< GPS time at start */
-	unsigned long sbf[5][N_DWRD_SBF]; /*!< current subframe */
+	unsigned long sbf[5][N_DWRD_SBF]; /*!< Current subframe */
 	unsigned long dwrd[N_DWRD]; /*!< Data words of sub-frame */
-	int iword;	/*!< initial word */
-	int ibit;	/*!< initial bit */
-	int icode;	/*!< initial code */
-	int dataBit;	/*!< current data bit */
-	int codeCA;	/*!< current C/A code */
+	int iword;	/*!< Initial word */
+	int ibit;	/*!< Initial bit */
+	int icode;	/*!< Initial code */
+	int dataBit;	/*!< Current data bit */
+	int codeCA;	/*!< Current C/A code */
 	double azel[2];
 	range_t rho0;
 } channel_t;

@@ -101,20 +101,17 @@ int main(int argc, char *const argv[]){
         };
 
         int c = getopt_long(argc, argv, "g:c:a:i:s:b:d:", long_options, &option_index);
-        if (c == -1)
-        break;
+        if (c == -1) break;
 
         switch (c) {
             case 0:
-            #if 1
-            fprintf(stderr, "option %s", long_options[option_index].name);
-            if (optarg)
-                fprintf(stderr, " with arg %s", optarg);
-            fprintf(stderr, "\n");
-            #endif
-
+                #if 1
+                fprintf(stderr, "option %s", long_options[option_index].name);
+                if (optarg)
+                    fprintf(stderr, " with arg %s", optarg);
+                fprintf(stderr, "\n");
+                #endif
             break;
-
             case 'a':
                 antenna = strtol(optarg, NULL, 0);
             break;
@@ -130,26 +127,23 @@ int main(int argc, char *const argv[]){
             case 'i':
                 index = strtol(optarg, NULL, 0);
             break;
-        case 's':
-            sampleRate = strtod(optarg, NULL);
-        break;
-        case 'd':
-            dynamic = strtol(optarg, NULL, 0);
-        if(dynamic > 2047){
-            dynamic = 2047;
-        }
-        break;
-        default:
-            print_usage(argv[0]);
-        break;
+            case 's':
+                sampleRate = strtod(optarg, NULL);
+            break;
+            case 'd':
+                dynamic = strtol(optarg, NULL, 0);
+                if(dynamic > 2047){
+                    dynamic = 2047;
+                }
+            break;
+            default:
+                print_usage(argv[0]);
+            break;
         }
     }
     // Use correct values
     // Use existing device
-    if(index < 0){
-        index = 0;
-    }
-    if(index >= device_count){
+    if((index < 0) || (index >= device_count)){
         index = 0;
     }
     printf("Using device index %d [%s]" "\n", index, device_list[index]);
@@ -181,10 +175,7 @@ int main(int argc, char *const argv[]){
 
     int channel_count = LMS_GetNumChannels(device, LMS_CH_TX);
     // printf("Tx channel count %d" "\n", channel_count);
-    if(channel < 0){
-        channel = 0;
-    }
-    if(channel >= channel_count){
+    if((channel < 0) || (channel >= channel_count)){
         channel = 0;
     }
     printf("Using channel %d" "\n", channel);
@@ -201,10 +192,7 @@ int main(int argc, char *const argv[]){
             // printf("Channel %d, antenna [%s] has BW [%lf .. %lf] (step %lf)" "\n", channel, antenna_name[i], antenna_bw[i].min, antenna_bw[i].max, antenna_bw[i].step);
         }
     }
-    if(antenna < 0){
-        antenna = DEFAULT_ANTENNA;
-    }
-    if(antenna >= antenna_count){
+    if((antenna < 0) || (antenna >= antenna_count)){
         antenna = DEFAULT_ANTENNA;
     }
     // LMS_SetAntenna(device, LMS_CH_TX, channel, antenna); // SetLOFrequency should take care of selecting the proper antenna
