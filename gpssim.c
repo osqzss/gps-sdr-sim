@@ -2009,7 +2009,7 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			if (fabs(subGpsTime(g0, gmin))>2*SECONDS_IN_HOUR && fabs(subGpsTime(gmax, g0))>2*SECONDS_IN_HOUR)
+			if (subGpsTime(g0, gmin)<0.0 || subGpsTime(gmax, g0)<0.0)
 			{
 				fprintf(stderr, "ERROR: Invalid start time.\n");
 				fprintf(stderr, "tmin = %4d/%02d/%02d,%02d:%02d:%02.0f (%d:%.0f)\n", 
@@ -2042,7 +2042,7 @@ int main(int argc, char *argv[])
 			if (eph[i][sv].vflg == 1)
 			{
 				dt = subGpsTime(g0, eph[i][sv].toc);
-				if (dt>=-2*SECONDS_IN_HOUR && dt<2*SECONDS_IN_HOUR)
+				if (dt>=-SECONDS_IN_HOUR && dt<SECONDS_IN_HOUR)
 				{
 					ieph = i;
 					break;
