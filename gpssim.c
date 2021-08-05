@@ -1739,7 +1739,7 @@ int main(int argc, char *argv[])
 
 	int staticLocationMode = FALSE;
 	int nmeaGGA = FALSE;
-	int umLLH = TRUE;
+	int umLLH = FALSE;
 
 	char navfile[MAX_CHAR];
 	char outfile[MAX_CHAR];
@@ -1801,9 +1801,9 @@ int main(int argc, char *argv[])
 		case 'u':
 			strcpy(umfile, optarg);
 			nmeaGGA = FALSE;
+			umLLH = FALSE;
 			break;
 		case 'x':
-			// Static geodetic coordinates input mode
 			// Added by romalvarezllorens@gmail.com
 			strcpy(umfile, optarg);
 			nmeaGGA = FALSE;
@@ -1812,6 +1812,7 @@ int main(int argc, char *argv[])
 		case 'g':
 			strcpy(umfile, optarg);
 			nmeaGGA = TRUE;
+			umLLH = FALSE
 			break;
 		case 'c':
 			// Static ECEF coordinates input mode
