@@ -1808,6 +1808,7 @@ int main(int argc, char *argv[])
 			strcpy(umfile, optarg);
 			nmeaGGA = FALSE;
 			umLLH = TRUE;
+			break;
 		case 'g':
 			strcpy(umfile, optarg);
 			nmeaGGA = TRUE;
