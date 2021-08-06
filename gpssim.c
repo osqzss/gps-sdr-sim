@@ -1806,13 +1806,11 @@ int main(int argc, char *argv[])
 		case 'x':
 			// Added by romalvarezllorens@gmail.com
 			strcpy(umfile, optarg);
-			nmeaGGA = FALSE;
 			umLLH = TRUE;
 			break;
 		case 'g':
 			strcpy(umfile, optarg);
 			nmeaGGA = TRUE;
-			umLLH = FALSE
 			break;
 		case 'c':
 			// Static ECEF coordinates input mode
