@@ -12,10 +12,10 @@ to RF using software-defined radio (SDR) platforms, such as
 4. Select "Release" in Solution Configurations drop-down list.
 5. Build the solution.
 
-### Building with GCC
+### Building with make
 
 ```
-$ gcc gpssim.c -lm -lpthread -O3 -o gps-sdr-sim
+$ make
 ```
 
 
