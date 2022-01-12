@@ -2,7 +2,7 @@
 
 GPS-SDR-SIM generates GPS baseband signal data streams, which can be converted 
 to RF using software-defined radio (SDR) platforms, such as 
-[bladeRF](http://nuand.com/), [HackRF](https://github.com/mossmann/hackrf/wiki), and [USRP](http://www.ettus.com/).
+[ADALM-Pluto](https://wiki.analog.com/university/tools/pluto), [bladeRF](http://nuand.com/), [HackRF](https://github.com/mossmann/hackrf/wiki), and [USRP](http://www.ettus.com/).
 
 ### Windows build instructions
 
@@ -17,6 +17,7 @@ to RF using software-defined radio (SDR) platforms, such as
 ```
 $ gcc gpssim.c -lm -lpthread -O3 -o gps-sdr-sim
 ```
+
 
 ### Realtime by Gnuradio
 
@@ -36,11 +37,7 @@ cd into /mapserver, and run
 python mapper.py
 ```
 
-Then visit http://127.0.0.1:8080/static/baidumap.html to use the baidu Online map.
-
-
-
-Actually I don't want to use BaiduMap.. But because of the GFW, I can't access Google..
+Then visit http://127.0.0.1:8080/static/baidumap.html to use the Online map.
 
 You can write an map which can POST data to http://127.0.0.1:8080/post like this
 
@@ -48,7 +45,24 @@ You can write an map which can POST data to http://127.0.0.1:8080/post like this
 lon=116&lat=39&hgt=10
 ```
 
-to replace Baidumap.
+
+
+### Using bigger user motion files
+
+In order to use user motion files with more than 30000 samples (at 10Hz), the `USER_MOTION_SIZE`
+variable can be set to the maximum time of the user motion file in seconds. It is advisable to do
+this using make so gps-sdr-bin can update the size when needed. e.g:
+
+```
+$ make USER_MOTION_SIZE=4000
+```
+
+This variable can also be set when compiling directly with GCC:
+
+```
+$ gcc gpssim.c -lm -O3 -o gps-sdr-sim -DUSER_MOTION_SIZE=4000
+```
+
 
 ### Generating the GPS signal file
 
@@ -58,20 +72,20 @@ The sampling rate of the user motion has to be 10Hz.
 The user is also able to assign a static location directly through the command line.
 
 The user specifies the GPS satellite constellation through a GPS broadcast 
-ephemeris file. The daily GPS broadcast ephemers file (brdc) is a merge of the
-individual site navigation files into one. The archive for the daily file is:
-
-[ftp://cddis.gsfc.nasa.gov/gnss/data/daily/](ftp://cddis.gsfc.nasa.gov/gnss/data/daily/)
+ephemeris file. The daily GPS broadcast ephemeris file (brdc) is a merge of the
+individual site navigation files into one. The archive for the daily file can 
+be downloaded from: https://cddis.nasa.gov/archive/gnss/data/daily/. Access 
+to this site requires registration, which is free.
 
 These files are then used to generate the simulated pseudorange and
 Doppler for the GPS satellites in view. This simulated range data is 
 then used to generate the digitized I/Q samples for the GPS signal.
 
-The bladeRF command line interface requires I/Q pairs stored as signed 
+The bladeRF and ADALM-Pluto command line interface requires I/Q pairs stored as signed 
 16-bit integers, while the hackrf_transfer and gps-sdr-sim-uhd.py
 support signed bytes.
 
-HackRF and bladeRF require 2.6 MHz sample rate, while the USRP2 requires
+HackRF, bladeRF and ADALM-Pluto require 2.6 MHz sample rate, while the USRP2 requires
 2.5 MHz (an even integral decimator of 100 MHz).
 
 The simulation start time can be specified if the corresponding set of ephemerides
@@ -92,11 +106,12 @@ Options:
   -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)
   -u <user_motion> User motion file (dynamic mode)
   -g <nmea_gga>    NMEA GGA stream (dynamic mode)
+  -c <location>    ECEF X,Y,Z in meters (static mode) e.g. 3967283.15,1022538.18,4872414.48
   -l <location>    Lat,Lon,Hgt (static mode) e.g. 30.286502,120.032669,100
   -t <date,time>   Scenario start time YYYY/MM/DD,hh:mm:ss
   -T <date,time>   Overwrite TOC and TOE to scenario start time
   -d <duration>    Duration [sec] (dynamic mode max: 300 static mode max: 86400)
-  -o <output>      I/Q sampling data file (default: gpssim.bin)
+  -o <output>      I/Q sampling data file (default: gpssim.bin ; use - for stdout)
   -s <frequency>   Sampling frequency [Hz] (default: 2600000)
   -b <iq_bits>     I/Q data format [1/8/16] (default: 16)
   -i               Disable ionospheric delay for spacecraft scenario
@@ -130,6 +145,8 @@ Use Gnuradio to realtime simulate 3000s:
 The TX port of a particular SDR platform is connected to the GPS receiver 
 under test through a DC block and a fixed 50-60dB attenuator.
 
+#### BladeRF:
+
 The simulated GPS signal file, named "gpssim.bin", can be loaded
 into the bladeRF for playback as shown below:
 
@@ -145,25 +162,50 @@ tx start
 ```
 
 You can also execute these commands via the `bladeRF-cli` script option as below:
-
 ```
 > bladeRF-cli -s bladerf.script
 ```
 
-For the HackRF:
+#### HackRF:
 
 ```
 > hackrf_transfer -t gpssim.bin -f 1575420000 -s 2600000 -a 1 -x 0
 ```
 
-For UHD supported devices (tested with USRP2 only):
+#### UHD supported devices (tested with USRP2 only):
 
 ```
 > gps-sdr-sim-uhd.py -t gpssim.bin -s 2500000 -x 0
 ```
 
+#### LimeSDR (in case of 1 Msps 1-bit file, to get full BaseBand dynamic and low RF power):
+
+```
+> limeplayer -s 1000000 -b 1 -d 2047 -g 0.1 < ../circle.1b.1M.bin
+```
+
+#### ADALM-Pluto (PlutoSDR):
+
+The ADALM-Pluto device is expected to have its network interface up and running and is accessible
+via "pluto.local" by default.
+
+Default settings:
+```
+> plutoplayer -t gpssim.bin
+```
+Set TX attenuation:
+```
+> plutoplayer -t gpssim.bin -a -30.0
+```
+Default -20.0dB. Applicable range 0.0dB to -80.0dB in 0.25dB steps.
+
+Set RF bandwidth:
+```
+> plutoplayer -t gpssim.bin -b 3.0
+```
+Default 3.0MHz. Applicable range 1.0MHz to 5.0MHz.
 
 ### License
 
-Copyright &copy; 2015 Takuji Ebinuma  
+Copyright &copy; 2015-2018 Takuji Ebinuma  
 Distributed under the [MIT License](http://www.opensource.org/licenses/mit-license.php).

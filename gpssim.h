@@ -1,6 +1,8 @@
 #ifndef GPSSIM_H
 #define GPSSIM_H
 
+#define FLOAT_CARR_PHASE // For RKT simulation. Higher computational load, but smoother carrier phase.
+
 #define TRUE	(1)
 #define FALSE	(0)
 #define true	(1)
@@ -15,7 +17,9 @@
 #define MAX_CHAN (16)
 
 /*! \brief Maximum number of user motion points */
+#ifndef USER_MOTION_SIZE
 #define USER_MOTION_SIZE (3000) // max duration at 10Hz
+#endif
 
 /*! \brief Maximum duration for static mode*/
 #define STATIC_MAX_DURATION (86400) // second
@@ -160,8 +164,12 @@ typedef struct
 	int ca[CA_SEQ_LEN]; /*< C/A Sequence */
 	double f_carr;	/*< Carrier frequency */
 	double f_code;	/*< Code frequency */
+#ifdef FLOAT_CARR_PHASE
+	double carr_phase;
+#else
 	unsigned int carr_phase; /*< Carrier phase */
 	int carr_phasestep;	/*< Carrier phasestep */
+#endif
 	double code_phase; /*< Code phase */
 	gpstime_t g0;	/*!< GPS time at start */
 	unsigned long sbf[5][N_DWRD_SBF]; /*!< current subframe */

@@ -38,6 +38,7 @@ gps-sdr-sim-lut
 
 # Temporary files
 *.swp
+
 *~
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -177,3 +178,10 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+
+# Netbeans project folder
+nbproject/*
+
+# Last used USER_MOTION_SIZE variable
+.user-motion-size
