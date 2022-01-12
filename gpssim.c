@@ -11,6 +11,8 @@
 #include <unistd.h>
 #endif
 #include "gpssim.h"
+#include "socket.c"
+#include <pthread.h>
 
 int sinTable512[] = {
 	   2,   5,   8,  11,  14,  17,  20,  23,  26,  29,  32,  35,  38,  41,  44,  47,
@@ -1663,8 +1665,10 @@ void usage(void)
 		"  -s <frequency>   Sampling frequency [Hz] (default: 2600000)\n"
 		"  -b <iq_bits>     I/Q data format [1/8/16] (default: 16)\n"
 		"  -i               Disable ionospheric delay for spacecraft scenario\n"
-		"  -v               Show details about simulated channels\n",
-		((double)USER_MOTION_SIZE) / 10.0, STATIC_MAX_DURATION);
+		"  -v               Show details about simulated channels\n"
+		"  -n <port>        Use TCP connect to Gnuradio TCP-Source for\n realtime simulation.\n"
+		"-w               Connect with map server(/mapserver/mapper.py) by udp on port 5678.\n",
+		(double)((USER_MOTION_SIZE)/10.0),(int)STATIC_MAX_DURATION);
 
 	return;
 }
@@ -1730,6 +1734,12 @@ int main(int argc, char *argv[])
 	int timeoverwrite = FALSE; // Overwrite the TOC and TOE in the RINEX file
 
 	ionoutc_t ionoutc;
+	
+	
+	int usesocket=false;
+	int webflag=0;
+	int sockc=0;
+	short port=1234;
 
 	////////////////////////////////////////////////////////////
 	// Read options
@@ -1753,7 +1763,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:g:c:l:o:s:b:T:t:d:iv"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:g:c:l:o:s:b:T:t:d:ivn:w"))!=-1)
 	{
 		switch (result)
 		{
@@ -1846,10 +1856,26 @@ int main(int argc, char *argv[])
 		case '?':
 			usage();
 			exit(1);
+		case 'n':
+			sscanf(optarg,"%hd",&port);
+			
+			usesocket=true;
+			break;
+		case  'w':
+			staticLocationMode = TRUE;
+			webflag=1;
+			break;
+			
 		default:
 			break;
 		}
 	}
+	if(webflag==1){
+		pthread_t th;
+		pthread_create(&th,NULL,(void *)threadrecv,NULL);
+	}	
+	if(usesocket==1)
+		sockc=sockinit(port);
 
 	if (navfile[0]==0)
 	{
@@ -1866,7 +1892,7 @@ int main(int argc, char *argv[])
 		llh[2] = 10.0;
 	}
 
-	if (duration<0.0 || (duration>((double)USER_MOTION_SIZE)/10.0 && !staticLocationMode) || (duration>STATIC_MAX_DURATION && staticLocationMode))
+	if (duration<0.0 || (duration>((double)USER_MOTION_SIZE)/10.0 && !staticLocationMode) || (duration>STATIC_MAX_DURATION && staticLocationMode&&usesocket==false))
 	{
 		fprintf(stderr, "ERROR: Invalid duration.\n");
 		exit(1);
@@ -2092,7 +2118,7 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 	}
-
+	if(usesocket==false){
 	// Open output file
 	// "-" can be used as name for stdout
 	if(strcmp("-", outfile)){
@@ -2104,7 +2130,7 @@ int main(int argc, char *argv[])
 	}else{
 		fp = stdout;
 	}
-
+	}
 	////////////////////////////////////////////////////////////
 	// Initialize channels
 	////////////////////////////////////////////////////////////
@@ -2142,7 +2168,7 @@ int main(int argc, char *argv[])
 	////////////////////////////////////////////////////////////
 
 	tstart = clock();
-
+	long int  timestart=timem();
 	// Update receiver time
 	grx = incGpsTime(grx, 0.1);
 
@@ -2258,7 +2284,7 @@ int main(int argc, char *argv[])
 			iq_buff[isamp*2+1] = (short)q_acc;
 		}
 
-		if (data_format==SC01)
+		if (data_format==SC01&&usesocket==false)
 		{
 			for (isamp=0; isamp<2*iq_buff_size; isamp++)
 			{
@@ -2270,16 +2296,25 @@ int main(int argc, char *argv[])
 
 			fwrite(iq8_buff, 1, iq_buff_size/4, fp);
 		}
-		else if (data_format==SC08)
+		else if (data_format==SC08&&usesocket==false)
 		{
 			for (isamp=0; isamp<2*iq_buff_size; isamp++)
 				iq8_buff[isamp] = iq_buff[isamp]>>4; // 12-bit bladeRF -> 8-bit HackRF
 
 			fwrite(iq8_buff, 1, 2*iq_buff_size, fp);
 		} 
-		else // data_format==SC16
+		else if(data_format==SC16&&usesocket==false)
 		{
 			fwrite(iq_buff, 2, 2*iq_buff_size, fp);
+		}
+		if(usesocket==true){
+			float *datap=(float*)calloc(iq_buff_size*2,sizeof(float));
+			int l=0;
+			for(l=0;l<iq_buff_size*2;l++){
+				datap[l]=(float)iq_buff[l];
+			}
+			socksend(sockc,datap,iq_buff_size*2*sizeof(float));
+			free(datap);
 		}
 
 		//
@@ -2338,7 +2373,16 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
-
+		if(subGpsTime(grx, g0)-(float)(timem()-timestart)/1000>0.1&&usesocket==true){
+			usleep(100000);
+		}
+		
+		if(webflag==1){
+			memcpy(llh,llhr,3*sizeof(double));
+			llh[0] = llh[0] / R2D; // convert to RAD
+			llh[1] = llh[1] / R2D; // convert to RAD
+			llh2xyz(llh,xyz[0]);
+		}
 		// Update receiver time
 		grx = incGpsTime(grx, 0.1);
 
@@ -2346,7 +2390,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "\rTime into run = %4.1f", subGpsTime(grx, g0));
 		fflush(stdout);
 	}
-
+ 
 	tend = clock();
 
 	fprintf(stderr, "\nDone!\n");
@@ -2355,10 +2399,14 @@ int main(int argc, char *argv[])
 	free(iq_buff);
 
 	// Close file
+	if(usesocket==false)
 	fclose(fp);
-
+	else sockclose(sockc);
 	// Process time
 	fprintf(stderr, "Process time = %.1f [sec]\n", (double)(tend-tstart)/CLOCKS_PER_SEC);
 
 	return(0);
 }
+
+
+

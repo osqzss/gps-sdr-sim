@@ -5,11 +5,12 @@ all: gps-sdr-sim
 
 SHELL=/bin/bash
 CC=gcc
+LDFLAGS=-lm -lpthread
 CFLAGS=-O3 -Wall -D_FILE_OFFSET_BITS=64
 ifdef USER_MOTION_SIZE
 CFLAGS+=-DUSER_MOTION_SIZE=$(USER_MOTION_SIZE)
 endif
-LDFLAGS=-lm
+
 
 gps-sdr-sim: gpssim.o
 	${CC} $< ${LDFLAGS} -o $@
