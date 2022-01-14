@@ -1930,6 +1930,11 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "ERROR: No ephemeris available.\n");
 		exit(1);
 	}
+	else if (neph==-1)
+	{
+		fprintf(stderr, "ERROR: ephemeris file not found.\n");
+		exit(1);
+	}
 
 	if ((verb==TRUE)&&(ionoutc.vflg==TRUE))
 	{
