@@ -40,6 +40,7 @@ gps-sdr-sim-lut
 *.swp
 
 *~
+<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -185,3 +186,8 @@ nbproject/*
 
 # Last used USER_MOTION_SIZE variable
 .user-motion-size
+=======
+
+# Python bytecodes
+*.pyc
+>>>>>>> 33aa99cdff44ab8f8ced315ff0b7ea047ef92403
