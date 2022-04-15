@@ -39,7 +39,9 @@ python mapper.py
 
 Then visit http://127.0.0.1:8080/static/baidumap.html to use the Online map.
 
-You can write an map which can POST data to http://127.0.0.1:8080/post like this
+Or visit http://127.0.0.1:8080/static/googlemap.html to use the google Online map.
+
+You can also write an map which can POST data to http://127.0.0.1:8080/post like this
 
 ```
 lon=116&lat=39&hgt=10
