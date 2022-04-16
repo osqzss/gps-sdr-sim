@@ -119,7 +119,7 @@ Options:
   -i               Disable ionospheric delay for spacecraft scenario
   -v               Show details about simulated channels
   -n <port>        Use TCP connection to Gnuradio TCP-Source for realtime simulation.
-  -w               Connect with map server(/mapserver/mapper.py) by udp on port 5678.
+  -w <port>        Connect with map server(/mapserver/mapper.py) by UDP (default port 5678).
 ```
 
 The user motion can be specified in either dynamic or static mode:

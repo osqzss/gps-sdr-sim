@@ -62,10 +62,10 @@ int udprecv(int s,void *dataa,int siz){
 
 double llhr[3]={39.68,139,76};
 
-void threadrecv(){
+void threadrecv(void *p){
 	printf("listing\n");
-	short p=5678;
-	int s=udpinit(p);
+	short port=*(short*)p;
+	int s=udpinit(port);
 	while(1){
 		udprecv(s,llhr,3*sizeof(double));
 		//printf("%lf%lf%lf\n",llhr[0],llhr[1],llhr[2]);

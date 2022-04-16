@@ -1667,7 +1667,7 @@ void usage(void)
 		"  -i               Disable ionospheric delay for spacecraft scenario\n"
 		"  -v               Show details about simulated channels\n"
 		"  -n <port>        Use TCP connect to Gnuradio TCP-Source for\n realtime simulation.\n"
-		"-w               Connect with map server(/mapserver/mapper.py) by udp on port 5678.\n",
+		"  -w <port>        Connect with map server(/mapserver/mapper.py) by UDP (default port 5678).\n",
 		(double)((USER_MOTION_SIZE)/10.0),(int)STATIC_MAX_DURATION);
 
 	return;
@@ -1740,6 +1740,7 @@ int main(int argc, char *argv[])
 	int webflag=0;
 	int sockc=0;
 	short port=1234;
+    short mapport=5678;
 
 	////////////////////////////////////////////////////////////
 	// Read options
@@ -1862,6 +1863,7 @@ int main(int argc, char *argv[])
 			usesocket=true;
 			break;
 		case  'w':
+            sscanf(optarg,"%hd",&mapport);
 			staticLocationMode = TRUE;
 			webflag=1;
 			break;
@@ -1872,7 +1874,7 @@ int main(int argc, char *argv[])
 	}
 	if(webflag==1){
 		pthread_t th;
-		pthread_create(&th,NULL,(void *)threadrecv,NULL);
+		pthread_create(&th,NULL,(void *)threadrecv,(void *)&mapport);
 	}	
 	if(usesocket==1)
 		sockc=sockinit(port);
