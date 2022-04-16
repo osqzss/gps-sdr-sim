@@ -1672,7 +1672,7 @@ void usage(void)
 
 	return;
 }
-
+unsigned short mapport=5678;
 int main(int argc, char *argv[])
 {
 	clock_t tstart,tend;
@@ -1739,8 +1739,7 @@ int main(int argc, char *argv[])
 	int usesocket=false;
 	int webflag=0;
 	int sockc=0;
-	short port=1234;
-    short mapport=5678;
+	unsigned short port=1234;
 
 	////////////////////////////////////////////////////////////
 	// Read options
@@ -1764,7 +1763,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:g:c:l:o:s:b:T:t:d:ivn:w"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:g:c:l:o:s:b:T:t:d:ivn:w:"))!=-1)
 	{
 		switch (result)
 		{
@@ -1874,7 +1873,7 @@ int main(int argc, char *argv[])
 	}
 	if(webflag==1){
 		pthread_t th;
-		pthread_create(&th,NULL,(void *)threadrecv,(void *)&mapport);
+		pthread_create(&th,NULL,(void *)threadrecv,(void *) &mapport);
 	}	
 	if(usesocket==1)
 		sockc=sockinit(port);
