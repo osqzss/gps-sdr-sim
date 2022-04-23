@@ -4,13 +4,6 @@ GPS-SDR-SIM generates GPS baseband signal data streams, which can be converted
 to RF using software-defined radio (SDR) platforms, such as 
 [ADALM-Pluto](https://wiki.analog.com/university/tools/pluto), [bladeRF](http://nuand.com/), [HackRF](https://github.com/mossmann/hackrf/wiki), and [USRP](http://www.ettus.com/).
 
-### Windows build instructions
-
-1. Start Visual Studio.
-2. Create an empty project for a console application.
-3. On the Solution Explorer at right, add "gpssim.c" and "getopt.c" to the Souce Files folder.
-4. Select "Release" in Solution Configurations drop-down list.
-5. Build the solution.
 
 ### Building with make
 
