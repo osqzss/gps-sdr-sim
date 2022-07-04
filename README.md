@@ -140,6 +140,11 @@ You can also execute these commands via the `bladeRF-cli` script option as below
 > gps-sdr-sim-uhd.py -t gpssim.bin -s 2500000 -x 0
 ```
 
+You can also use `tx_samples_from_file` tool included in the UHD examples:
+```
+> tx_samples_from_file --file gpssim.bin --type short --rate 2500000 --freq 1575420000 --gain 0
+```
+
 #### LimeSDR (in case of 1 Msps 1-bit file, to get full BaseBand dynamic and low RF power):
 
 ```
