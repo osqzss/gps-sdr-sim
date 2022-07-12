@@ -1,11 +1,12 @@
 #ifndef GPSSIM_H
 #define GPSSIM_H
 
-#define FLOAT_CARR_PHASE // For RKT simulation. Higher computational load, but smoother carrier phase.
+//#define FLOAT_CARR_PHASE // For RKT simulation. Higher computational load, but smoother carrier phase.
 
 #define TRUE	(1)
 #define FALSE	(0)
-
+#define true	(1)
+#define false	(0)
 /*! \brief Maximum length of a line in a text file (RINEX, motion) */
 #define MAX_CHAR (100)
 

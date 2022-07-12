@@ -1,22 +1,46 @@
-# GPS-SDR-SIM
+# GPS-SDR-SIM realtime
 
 GPS-SDR-SIM generates GPS baseband signal data streams, which can be converted 
 to RF using software-defined radio (SDR) platforms, such as 
 [ADALM-Pluto](https://wiki.analog.com/university/tools/pluto), [bladeRF](http://nuand.com/), [HackRF](https://github.com/mossmann/hackrf/wiki), and [USRP](http://www.ettus.com/).
 
-### Windows build instructions
 
-1. Start Visual Studio.
-2. Create an empty project for a console application.
-3. On the Solution Explorer at right, add "gpssim.c" and "getopt.c" to the Souce Files folder.
-4. Select "Release" in Solution Configurations drop-down list.
-5. Build the solution.
-
-### Building with GCC
+### Building with make
 
 ```
-$ gcc gpssim.c -lm -O3 -o gps-sdr-sim
+$ make
 ```
+
+
+### Realtime by Gnuradio
+
+Use -n option can connect to a TCP source in Gnuradio for realtime simulation.
+
+The tcp source should be set in "Server" mode.
+
+See tcp.grc as an example.
+
+### Map
+
+Run gps-sdr-sim with -w option, and 
+
+cd into /mapserver, and run
+
+```
+python mapper.py
+```
+
+Then visit http://127.0.0.1:8080/static/baidumap.html to use the Online map.
+
+Or visit http://127.0.0.1:8080/static/googlemap.html to use the google Online map.
+
+You can also write an map which can POST data to http://127.0.0.1:8080/post like this
+
+```
+lon=116&lat=39&hgt=10
+```
+
+
 
 ### Using bigger user motion files
 
@@ -33,6 +57,7 @@ This variable can also be set when compiling directly with GCC:
 ```
 $ gcc gpssim.c -lm -O3 -o gps-sdr-sim -DUSER_MOTION_SIZE=4000
 ```
+
 
 ### Generating the GPS signal file
 
@@ -86,6 +111,8 @@ Options:
   -b <iq_bits>     I/Q data format [1/8/16] (default: 16)
   -i               Disable ionospheric delay for spacecraft scenario
   -v               Show details about simulated channels
+  -n <port>        Use TCP connection to Gnuradio TCP-Source for realtime simulation.
+  -w <port>        Connect with map server(/mapserver/mapper.py) by UDP (default port 5678).
 ```
 
 The user motion can be specified in either dynamic or static mode:
@@ -100,6 +127,12 @@ The user motion can be specified in either dynamic or static mode:
 
 ```
 > gps-sdr-sim -e brdc3540.14n -l 30.286502,120.032669,100
+```
+
+Use Gnuradio to realtime simulate 3000s:
+
+```
+> gps-sdr-sim -e brdc3540.14n -l 30.286502,120.032669,100 -n 1234 -d 3000
 ```
 
 ### Transmitting the samples
