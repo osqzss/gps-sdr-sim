@@ -1394,7 +1394,7 @@ int readUserMotionLLH(double xyz[USER_MOTION_SIZE][3], const char *filename)
 {
 	FILE *fp;
 	int numd;
-	double llh_convert[3];
+	double t,llh[3];
 	char str[MAX_CHAR];
 
 	if (NULL==(fp=fopen(filename,"rt")))
@@ -1405,13 +1405,20 @@ int readUserMotionLLH(double xyz[USER_MOTION_SIZE][3], const char *filename)
 		if (fgets(str, MAX_CHAR, fp)==NULL)
 			break;
 
-		if (EOF==sscanf(str, "%lf,%lf,%lf", &llh_convert[0], &llh_convert[1], &llh_convert[2])) // Read CSV line
+		if (EOF==sscanf(str, "%lf,%lf,%lf,%lf", &t, &llh[0], &llh[1], &llh[2])) // Read CSV line
 			break;
 		
-		llh_convert[0] = llh_convert[0] / R2D; // convert to RAD
-		llh_convert[1] = llh_convert[1] / R2D; // convert to RAD
-		llh2xyz(llh_convert, xyz[numd]);
+		if (llh[0] > 90.0 || llh[0] < -90.0 || llh[1]>180.0 || llh[1] < -180.0)
+		{
+			fprintf(stderr, "ERROR: Invalid file format (time[s], latitude[deg], longitude[deg], height [m].\n");
+			numd = 0; // Empty user motion
+			break;
+		}
 
+		llh[0] /= R2D; // convert to RAD
+		llh[1] /= R2D; // convert to RAD
+
+		llh2xyz(llh, xyz[numd]);
 	}
 
 	fclose(fp);
@@ -1688,11 +1695,11 @@ void usage(void)
 	fprintf(stderr, "Usage: gps-sdr-sim [options]\n"
 		"Options:\n"
 		"  -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)\n"
-		"  -u <user_motion> User motion file (dynamic mode)\n"
-		"  -x <user_motio_llh>  User motion file in Lat,Lon,Height format(dynamic mode)\n"
+		"  -u <user_motion> User motion file in ECEF x, y, z format (dynamic mode)\n"
+		"  -x <user_motion> User motion file in lat, lon, height format (dynamic mode)\n"
 		"  -g <nmea_gga>    NMEA GGA stream (dynamic mode)\n"
 		"  -c <location>    ECEF X,Y,Z in meters (static mode) e.g. 3967283.154,1022538.181,4872414.484\n"
-		"  -l <location>    Lat,Lon,Hgt (static mode) e.g. 35.681298,139.766247,10.0\n"
+		"  -l <location>    Lat, lon, height (static mode) e.g. 35.681298,139.766247,10.0\n"
 		"  -t <date,time>   Scenario start time YYYY/MM/DD,hh:mm:ss\n"
 		"  -T <date,time>   Overwrite TOC and TOE to scenario start time\n"
 		"  -d <duration>    Duration [sec] (dynamic mode max: %.0f, static mode max: %d)\n"
