@@ -93,6 +93,9 @@ The user motion can be specified in either dynamic or static mode:
 
 ```
 > gps-sdr-sim -e brdc3540.14n -u circle.csv
+```
+
+```
 > gps-sdr-sim -e brdc3540.14n -x circle_llh.csv
 ```
 
