@@ -74,7 +74,8 @@ for bladeRF to playback the compressed file.
 Usage: gps-sdr-sim [options]
 Options:
   -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)
-  -u <user_motion> User motion file (dynamic mode)
+  -u <user_motion> User motion file in ECEF x, y, z format (dynamic mode)
+  -x <user_motion> User motion file in lat, lon, height format (dynamic mode)
   -g <nmea_gga>    NMEA GGA stream (dynamic mode)
   -c <location>    ECEF X,Y,Z in meters (static mode) e.g. 3967283.15,1022538.18,4872414.48
   -l <location>    Lat,Lon,Hgt (static mode) e.g. 30.286502,120.032669,100
@@ -92,6 +93,7 @@ The user motion can be specified in either dynamic or static mode:
 
 ```
 > gps-sdr-sim -e brdc3540.14n -u circle.csv
+> gps-sdr-sim -e brdc3540.14n -x circle_llh.csv
 ```
 
 ```
