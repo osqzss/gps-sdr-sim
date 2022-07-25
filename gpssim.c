@@ -1383,6 +1383,42 @@ int readUserMotion(double xyz[USER_MOTION_SIZE][3], const char *filename)
 	return (numd);
 }
 
+/*! \brief Read the list of user motions from the input file
+ *  \param[out] xyz Output array of LatLonHei coordinates for user motion
+ *  \param[[in] filename File name of the text input file with format Lat,Lon,Hei
+ *  \returns Number of user data motion records read, -1 on error
+ *
+ * Added by romalvarezllorens@gmail.com
+ */
+int readUserMotionLLH(double xyz[USER_MOTION_SIZE][3], const char *filename)
+{
+	FILE *fp;
+	int numd;
+	double llh_convert[3];
+	char str[MAX_CHAR];
+
+	if (NULL==(fp=fopen(filename,"rt")))
+		return(-1);
+
+	for (numd=0; numd<USER_MOTION_SIZE; numd++)
+	{
+		if (fgets(str, MAX_CHAR, fp)==NULL)
+			break;
+
+		if (EOF==sscanf(str, "%lf,%lf,%lf", &llh_convert[0], &llh_convert[1], &llh_convert[2])) // Read CSV line
+			break;
+		
+		llh_convert[0] = llh_convert[0] / R2D; // convert to RAD
+		llh_convert[1] = llh_convert[1] / R2D; // convert to RAD
+		llh2xyz(llh_convert, xyz[numd]);
+
+	}
+
+	fclose(fp);
+
+	return (numd);
+}
+
 int readNmeaGGA(double xyz[USER_MOTION_SIZE][3], const char *filename)
 {
 	FILE *fp;
@@ -1653,6 +1689,7 @@ void usage(void)
 		"Options:\n"
 		"  -e <gps_nav>     RINEX navigation file for GPS ephemerides (required)\n"
 		"  -u <user_motion> User motion file (dynamic mode)\n"
+		"  -x <user_motio_llh>  User motion file in Lat,Lon,Height format(dynamic mode)\n"
 		"  -g <nmea_gga>    NMEA GGA stream (dynamic mode)\n"
 		"  -c <location>    ECEF X,Y,Z in meters (static mode) e.g. 3967283.154,1022538.181,4872414.484\n"
 		"  -l <location>    Lat,Lon,Hgt (static mode) e.g. 35.681298,139.766247,10.0\n"
@@ -1702,6 +1739,7 @@ int main(int argc, char *argv[])
 
 	int staticLocationMode = FALSE;
 	int nmeaGGA = FALSE;
+	int umLLH = FALSE;
 
 	char navfile[MAX_CHAR];
 	char outfile[MAX_CHAR];
@@ -1753,7 +1791,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:g:c:l:o:s:b:T:t:d:iv"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:x:g:c:l:o:s:b:T:t:d:iv"))!=-1)
 	{
 		switch (result)
 		{
@@ -1763,6 +1801,12 @@ int main(int argc, char *argv[])
 		case 'u':
 			strcpy(umfile, optarg);
 			nmeaGGA = FALSE;
+			umLLH = FALSE;
+			break;
+		case 'x':
+			// Added by romalvarezllorens@gmail.com
+			strcpy(umfile, optarg);
+			umLLH = TRUE;
 			break;
 		case 'g':
 			strcpy(umfile, optarg);
@@ -1889,6 +1933,8 @@ int main(int argc, char *argv[])
 		// Read user motion file
 		if (nmeaGGA==TRUE)
 			numd = readNmeaGGA(xyz, umfile);
+		else if (umLLH == TRUE)
+			numd = readUserMotionLLH(xyz, umfile);
 		else
 			numd = readUserMotion(xyz, umfile);
 
