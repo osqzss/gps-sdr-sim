@@ -135,6 +135,12 @@ You can also execute these commands via the `bladeRF-cli` script option as below
 
 #### HackRF:
 
+The output data has to be 8-bit signed I/Q samples.
+```
+> gps-sdr-sim -e brdc0010.22n -b 8
+```
+You can use `hackrf_transfer` tool in the HackRF host software. 
+
 ```
 > hackrf_transfer -t gpssim.bin -f 1575420000 -s 2600000 -a 1 -x 0
 ```
