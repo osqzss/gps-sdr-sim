@@ -1959,6 +1959,9 @@ int main(int argc, char *argv[])
 		// Set simulation duration
 		if (numd>iduration)
 			numd = iduration;
+
+		// Set user initial position
+		xyz2llh(xyz[0], llh);
 	} 
 	else 
 	{ 
@@ -1966,12 +1969,16 @@ int main(int argc, char *argv[])
 		// Added by scateu@gmail.com 
 		fprintf(stderr, "Using static location mode.\n");
 
+		// Set simulation duration
 		numd = iduration;
+
+		// Set user initial position
+		llh2xyz(llh, xyz[0]);
 	}
-/*
+
 	fprintf(stderr, "xyz = %11.1f, %11.1f, %11.1f\n", xyz[0][0], xyz[0][1], xyz[0][2]);
 	fprintf(stderr, "llh = %11.6f, %11.6f, %11.1f\n", llh[0]*R2D, llh[1]*R2D, llh[2]);
-*/
+
 	////////////////////////////////////////////////////////////
 	// Read ephemeris
 	////////////////////////////////////////////////////////////
