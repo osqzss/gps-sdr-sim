@@ -55,8 +55,8 @@ The bladeRF and ADALM-Pluto command line interface requires I/Q pairs stored as 
 16-bit integers, while the hackrf_transfer and gps-sdr-sim-uhd.py
 support signed bytes.
 
-HackRF, bladeRF and ADALM-Pluto require 2.6 MHz sample rate, while the USRP2 requires
-2.5 MHz (an even integral decimator of 100 MHz).
+HackRF, bladeRF and ADALM-Pluto can accept the default sample rate of 2.6MHz, 
+while the USRP2 requires an even integral decimator of 100 MHz, i.e. 2.5MHz.
 
 The simulation start time can be specified if the corresponding set of ephemerides
 is available. Otherwise the first time of ephemeris in the RINEX navigation file
