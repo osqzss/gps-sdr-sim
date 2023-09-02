@@ -1707,6 +1707,7 @@ void usage(void)
 		"  -s <frequency>   Sampling frequency [Hz] (default: 2600000)\n"
 		"  -b <iq_bits>     I/Q data format [1/8/16] (default: 16)\n"
 		"  -i               Disable ionospheric delay for spacecraft scenario\n"
+		"  -p               Disable path loss and hold power level constant\n"
 		"  -v               Show details about simulated channels\n",
 		((double)USER_MOTION_SIZE) / 10.0, STATIC_MAX_DURATION);
 
@@ -1775,6 +1776,7 @@ int main(int argc, char *argv[])
 	int timeoverwrite = FALSE; // Overwrite the TOC and TOE in the RINEX file
 
 	ionoutc_t ionoutc;
+	int path_loss_enable = TRUE;
 
 	////////////////////////////////////////////////////////////
 	// Read options
@@ -1798,7 +1800,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:x:g:c:l:o:s:b:T:t:d:iv"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:x:g:c:l:o:s:b:T:t:d:ipv"))!=-1)
 	{
 		switch (result)
 		{
@@ -1889,6 +1891,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'i':
 			ionoutc.enable = FALSE; // Disable ionospheric correction
+			break;
+		case 'p':
+			path_loss_enable = FALSE; // Disable path loss
 			break;
 		case 'v':
 			verb = TRUE;
@@ -2243,7 +2248,10 @@ int main(int argc, char *argv[])
 				ant_gain = ant_pat[ibs];
 
 				// Signal gain
-				gain[i] = (int)(path_loss*ant_gain*128.0); // scaled by 2^7
+				if (path_loss_enable == TRUE)
+					gain[i] = (int)(path_loss * ant_gain * 128.0); // scaled by 2^7
+				else
+					gain[i] = 128; // hold the power level constant
 			}
 		}
 
