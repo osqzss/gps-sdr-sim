@@ -1707,7 +1707,7 @@ void usage(void)
 		"  -s <frequency>   Sampling frequency [Hz] (default: 2600000)\n"
 		"  -b <iq_bits>     I/Q data format [1/8/16] (default: 16)\n"
 		"  -i               Disable ionospheric delay for spacecraft scenario\n"
-		"  -p               Disable path loss and hold power level constant\n"
+		"  -p [fixed_gain]  Disable path loss and hold power level constant\n"
 		"  -v               Show details about simulated channels\n",
 		((double)USER_MOTION_SIZE) / 10.0, STATIC_MAX_DURATION);
 
@@ -1761,6 +1761,7 @@ int main(int argc, char *argv[])
 	int gain[MAX_CHAN];
 	double path_loss;
 	double ant_gain;
+	int fixed_gain = 128;
 	double ant_pat[37];
 	int ibs; // boresight angle index
 
@@ -1893,6 +1894,16 @@ int main(int argc, char *argv[])
 			ionoutc.enable = FALSE; // Disable ionospheric correction
 			break;
 		case 'p':
+			if (optind < argc && argv[optind][0] != '-') // Check if next item is an argument
+			{
+				fixed_gain = atoi(argv[optind]);
+				if (fixed_gain < 1 || fixed_gain > 128)
+				{
+					fprintf(stderr, "ERROR: Fixed gain must be between 1 and 128.\n");
+					exit(1);
+				}
+				optind++;  // Move past this argument for next iteration
+			}
 			path_loss_enable = FALSE; // Disable path loss
 			break;
 		case 'v':
@@ -2251,7 +2262,7 @@ int main(int argc, char *argv[])
 				if (path_loss_enable == TRUE)
 					gain[i] = (int)(path_loss * ant_gain * 128.0); // scaled by 2^7
 				else
-					gain[i] = 128; // hold the power level constant
+					gain[i] = fixed_gain; // hold the power level constant
 			}
 		}
 
