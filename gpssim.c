@@ -92,6 +92,8 @@ double ant_pat_db[37] = {
 
 int allocatedSat[MAX_SAT];
 
+double xyz[USER_MOTION_SIZE][3];
+
 /*! \brief Subtract two vectors of double
  *  \param[out] y Result of subtraction
  *  \param[in] x1 Minuend of subtraction
@@ -1743,7 +1745,7 @@ int main(int argc, char *argv[])
 	int iumd;
 	int numd;
 	char umfile[MAX_CHAR];
-	double xyz[USER_MOTION_SIZE][3];
+
 
 	int staticLocationMode = FALSE;
 	int nmeaGGA = FALSE;
