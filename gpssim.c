@@ -1662,7 +1662,8 @@ int allocateChannel(channel_t *chan, ephem_t *eph, ionoutc_t ionoutc, gpstime_t 
 						computeRange(&rho, eph[sv], &ionoutc, grx, ref);
 						r_ref = rho.range;
 
-						phase_ini = (2.0*r_ref - r_xyz)/LAMBDA_L1;
+						phase_ini = 0.0; // TODO: Must initialize properly
+						//phase_ini = (2.0*r_ref - r_xyz)/LAMBDA_L1;
 #ifdef FLOAT_CARR_PHASE
 						chan[i].carr_phase = phase_ini - floor(phase_ini);
 #else
