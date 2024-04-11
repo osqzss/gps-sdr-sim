@@ -144,6 +144,8 @@ typedef struct
 	double A0,A1;
 	int dtls,tot,wnt;
 	int dtlsf,dn,wnlsf;
+	// enable custom leap event
+	int leapen;
 } ionoutc_t;
 
 typedef struct
