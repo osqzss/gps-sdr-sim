@@ -87,7 +87,7 @@ Options:
   -s <frequency>   Sampling frequency [Hz] (default: 2600000)
   -b <iq_bits>     I/Q data format [1/8/16] (default: 16)
   -i               Disable ionospheric delay for spacecraft scenario
-  -p               Disable path loss and hold power level constant
+  -p [fixed_gain]  Disable path loss and hold power level constant
   -v               Show details about simulated channels
 ```
 
