@@ -78,7 +78,7 @@
 #define SC08 (8)
 #define SC16 (16)
 
-#define EPHEM_ARRAY_SIZE (13) // for daily GPS broadcast ephemers file (brdc)
+#define EPHEM_ARRAY_SIZE (15) // for daily GPS broadcast ephemers file (brdc)
 
 /*! \brief Structure representing GPS time */
 typedef struct
