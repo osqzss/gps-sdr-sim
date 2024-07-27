@@ -147,6 +147,9 @@ You can use `hackrf_transfer` tool in the HackRF host software.
 > hackrf_transfer -t gpssim.bin -f 1575420000 -s 2600000 -a 1 -x 0
 ```
 
+For HackRF an TCXO may be required. For further troubleshooting have a look at https://github.com/osqzss/gps-sdr-sim/issues/305
+
+
 #### UHD supported devices (tested with USRP2 only):
 
 ```
