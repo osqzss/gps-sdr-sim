@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
     printf("* Transmit file size: %s\n", buf);
     
     printf("* Acquiring IIO context\n");
-    //ctx = iio_create_default_context();
+    //ctx = iio_create_default_context(); // This may create non-PlutoSDR IIO context.
     if (ctx == NULL) {
         if(ip != NULL) {
             ctx = iio_create_network_context(ip);
@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Failed creating IIO context: %s\n", buf);
         return false;
     }
-
+/*
     struct iio_scan_context *scan_ctx;
     struct iio_context_info **info;
     scan_ctx = iio_create_scan_context(NULL, 0);    
@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
         }
     iio_scan_context_destroy(scan_ctx);        
     }    
-    
+ */   
     printf("* Acquiring devices\n");
     int device_count = iio_context_get_devices_count(ctx);
     if (!device_count) {
