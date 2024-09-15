@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
     printf("* Transmit file size: %s\n", buf);
     
     printf("* Acquiring IIO context\n");
-    //ctx = iio_create_default_context(); // Create a context from local IIO devices (Linux only)
+    //ctx = iio_create_default_context();
     if (ctx == NULL) {
         if(ip != NULL) {
             ctx = iio_create_network_context(ip);
