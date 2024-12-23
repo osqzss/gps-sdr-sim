@@ -2392,7 +2392,10 @@ int main(int argc, char *argv[])
 		else if (data_format==SC08)
 		{
 			for (isamp=0; isamp<2*iq_buff_size; isamp++)
+			{
 				iq8_buff[isamp] = iq_buff[isamp]>>4; // 12-bit bladeRF -> 8-bit HackRF
+				//iq8_buff[isamp] = iq_buff[isamp] >> 8; // for PocketSDR
+			}
 
 			fwrite(iq8_buff, 1, 2*iq_buff_size, fp);
 		}
