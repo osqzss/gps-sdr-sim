@@ -47,6 +47,30 @@ individual site navigation files into one. The archive for the daily file can
 be downloaded from: https://cddis.nasa.gov/archive/gnss/data/daily/. Access 
 to this site requires registration, which is free.
 
+After registration, automated downloads can be done in a script by adding
+the following entry to one's netrc file (filling in the appropriate values
+for username and password):
+```bash
+echo machine urs.earthdata.nasa.gov login <your username> password <your password> >> ~/.netrc
+chmod 600 ~/.netrc
+```
+
+and then including the following code (or similar) in a script:
+
+```bash
+day=$(date +%j)
+year=$(date +%Y)
+yr=$(date +%y)
+RINEX_NAV_FILE="brdc${day}0.${yr}n"
+curl \
+    --cookie-jar /tmp/cookie \
+    --netrc \
+    --location \
+    --output "${RINEX_NAV_FILE}.gz" "https://cddis.nasa.gov/archive/gnss/data/daily/${year}/brdc/${RINEX_NAV_FILE}.gz" \
+uncompress --force --keep "${RINEX_NAV_FILE}.gz"
+ls -al "${RINEX_NAV_FILE}"
+```
+
 These files are then used to generate the simulated pseudorange and
 Doppler for the GPS satellites in view. This simulated range data is 
 then used to generate the digitized I/Q samples for the GPS signal.
