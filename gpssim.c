@@ -12,6 +12,9 @@
 #endif
 #include "gpssim.h"
 
+
+#define SIN_COS_SCALE 256
+
 int sinTable512[] = {
 	   2,   5,   8,  11,  14,  17,  20,  23,  26,  29,  32,  35,  38,  41,  44,  47,
 	  50,  53,  56,  59,  62,  65,  68,  71,  74,  77,  80,  83,  86,  89,  91,  94,
@@ -1703,6 +1706,30 @@ int allocateChannel(channel_t *chan, ephem_t *eph, ionoutc_t ionoutc, gpstime_t 
 	return(nsat);
 }
 
+
+/* Calculate the increment for an NCO.
+ * The increment is the amount added to the NCO on every sample.
+ */
+int calc_nco_increment(int nco_freq, int sample_freq)
+{
+
+	double freq_ratio;
+
+	printf("nco is %d, sample is %d\n", nco_freq, sample_freq);
+
+#if 1
+	/* Offset frequency ratio is the ratio between the NCO and the sampling rate. */
+	freq_ratio = ((double) nco_freq)/((double) sample_freq);
+
+	return (int)(freq_ratio * 512.0 * 65536.0);
+#else
+	freq_ratio = ((double) nco_freq) * ((double) sample_freq);
+
+	return (int)(freq_ratio / (512.0 * 65536.0));
+#endif
+}
+
+
 void usage(void)
 {
 	fprintf(stderr, "Usage: gps-sdr-sim [options]\n"
@@ -1719,6 +1746,9 @@ void usage(void)
 		"  -d <duration>    Duration [sec] (dynamic mode max: %.0f, static mode max: %d)\n"
 		"  -o <output>      I/Q sampling data file (default: gpssim.bin)\n"
 		"  -s <frequency>   Sampling frequency [Hz] (default: 2600000)\n"
+		"  -I <frequency>   Intermediate Frequency Offset [Hz] (default: 0)\n"
+		"  -M <frequency>   Add a CW marker at specified frequency offset [Hz] eg (-M0 for centre at 1575.420MHz)\n"
+		"  -m <amplitude>   Set amplitude of CW marker. Default 1.0\n"
 		"  -b <iq_bits>     I/Q data format [1/8/16] (default: 16)\n"
 		"  -i               Disable ionospheric delay for spacecraft scenario\n"
 		"  -p [fixed_gain]  Disable path loss and hold power level constant\n"
@@ -1770,6 +1800,16 @@ int main(int argc, char *argv[])
 	int iq_buff_size;
 	int data_format;
 
+	int marker_on;
+	int marker_offset;
+	int marker_count;
+	int marker_increment;
+	double marker_amplitude;
+
+	int if_offset;
+	int if_count;
+	int if_increment;
+
 	int result;
 
 	int gain[MAX_CHAN];
@@ -1809,6 +1849,10 @@ int main(int argc, char *argv[])
 	verb = FALSE;
 	ionoutc.enable = TRUE;
 	ionoutc.leapen = FALSE;
+	if_offset = 0;
+	marker_on = 0;
+	marker_offset = 0;
+	marker_amplitude = 1.0;
 
 	if (argc<3)
 	{
@@ -1816,7 +1860,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((result=getopt(argc,argv,"e:u:x:g:c:l:o:s:b:L:T:t:d:ipv"))!=-1)
+	while ((result=getopt(argc,argv,"e:u:x:g:c:l:o:I:M:m:s:b:L:T:t:d:ipv"))!=-1)
 	{
 		switch (result)
 		{
@@ -1841,6 +1885,16 @@ int main(int argc, char *argv[])
 			// Static ECEF coordinates input mode
 			staticLocationMode = TRUE;
 			sscanf(optarg,"%lf,%lf,%lf",&xyz[0][0],&xyz[0][1],&xyz[0][2]);
+			break;
+		case 'I':
+			if_offset = atof(optarg);
+			break;
+		case 'M':
+			marker_on = 1;
+			marker_offset = atof(optarg);
+			break;
+		case 'm':
+			marker_amplitude = atof(optarg);
 			break;
 		case 'l':
 			// Static geodetic coordinates input mode
@@ -1981,6 +2035,31 @@ int main(int argc, char *argv[])
 	samp_freq *= 10.0;
 
 	delt = 1.0/samp_freq;
+
+
+	if_count = 0;
+	if_increment = 0;
+	marker_count = 0;
+	marker_increment = 0;
+
+	if (if_offset)
+	{
+		if_increment = calc_nco_increment(if_offset, samp_freq);
+		fprintf(stderr, "if_increment is %d\n", if_increment);
+
+		if (fabs(if_offset) >= samp_freq / 2) {
+			fprintf(stderr, "** WARNING IF frequency is too large relative to sample frequency\n");
+		}
+	}
+
+	if (marker_on)
+	{
+		marker_increment = calc_nco_increment(marker_offset, samp_freq);
+		fprintf(stderr, "marker_increment is %d\n", marker_increment);
+		if (fabs(marker_offset) >= samp_freq / 2) {
+			fprintf(stderr, "** WARNING Marker frequency is too large relative to sample frequency\n");
+		}
+	}
 
 	////////////////////////////////////////////////////////////
 	// Receiver position
@@ -2239,6 +2318,7 @@ int main(int argc, char *argv[])
 	// Allocate visible satellites
 	allocateChannel(chan, eph[ieph], ionoutc, grx, xyz[0], elvmask);
 
+	fprintf(stderr, "PRN  Az     El      Delay    Iono\n");
 	for(i=0; i<MAX_CHAN; i++)
 	{
 		if (chan[i].prn>0)
@@ -2368,9 +2448,50 @@ int main(int argc, char *argv[])
 				}
 			}
 
+
+			if (marker_on)
+			{
+				/*
+				 * If there is a frequency offset then mix with the
+				 * offset frequency.
+				 */
+				int m_phase = (marker_count >> 16) & 0x1ff;
+				int m_sin = sinTable512[m_phase];
+				int m_cos = cosTable512[m_phase];
+
+				i_acc = m_cos * marker_amplitude;
+				q_acc = m_sin * marker_amplitude;
+
+				/* Increment phase. */
+				marker_count += marker_increment;
+			}
+
 			// Scaled by 2^7
 			i_acc = (i_acc+64)>>7;
 			q_acc = (q_acc+64)>>7;
+
+
+			if(if_offset != 0)
+			{
+				/*
+				 * If there is a frequency offset then mix with the
+				 * offset frequency.
+				 */
+				int if_phase = (if_count >> 16) & 0x1ff;
+				int if_sin = sinTable512[if_phase];
+				int if_cos = cosTable512[if_phase];
+				int tmp_i;
+				int tmp_q;
+
+				tmp_i = (i_acc * if_cos - q_acc * if_sin)/SIN_COS_SCALE;
+				tmp_q = (i_acc * if_sin + q_acc * if_cos)/SIN_COS_SCALE;
+
+				i_acc = tmp_i;
+				q_acc = tmp_q;
+
+				/* Increment phase. */
+				if_count += if_increment;
+			}
 
 			// Store I/Q samples into buffer
 			iq_buff[isamp*2] = (short)i_acc;
